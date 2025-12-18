@@ -1,0 +1,27 @@
+{
+  "videoApp": {
+    "videoImagen": {
+      "home": {
+        "title": "Video Imagens",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Video Imagen",
+        "createOrEditLabel": "Create or edit a Video Imagen",
+        "notFound": "No Video Imagens found"
+      },
+      "created": "A new Video Imagen is created with identifier {{ param }}",
+      "updated": "A Video Imagen is updated with identifier {{ param }}",
+      "deleted": "A Video Imagen is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Video Imagen {{ id }}?"
+      },
+      "detail": {
+        "title": "Video Imagen"
+      },
+      "id": "ID",
+      "filename": "Filename",
+      "orden": "Orden",
+      "duracionIndividual": "Duracion Individual",
+      "video": "Video"
+    }
+  }
+}

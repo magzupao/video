@@ -1,0 +1,32 @@
+{
+  "videoApp": {
+    "video": {
+      "home": {
+        "title": "Videos",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Video",
+        "createOrEditLabel": "Crear o editar Video",
+        "notFound": "Ningún Videos encontrado"
+      },
+      "created": "Un nuevo Video ha sido creado con el identificador {{ param }}",
+      "updated": "Un Video ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Video ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Video {{ id }}?"
+      },
+      "detail": {
+        "title": "Video"
+      },
+      "id": "ID",
+      "titulo": "Titulo",
+      "audioFilename": "Audio Filename",
+      "tieneAudio": "Tiene Audio",
+      "duracionTransicion": "Duracion Transicion",
+      "estado": "Estado",
+      "fechaCreacion": "Fecha Creacion",
+      "fechaDescarga": "Fecha Descarga",
+      "imagenes": "Imagenes",
+      "user": "User"
+    }
+  }
+}

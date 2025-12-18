@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Added the entity Video.
+    -->
+    <changeSet id="20251218202500-1" author="jhipster">
+        <createTable tableName="video" remarks="Video generado por el usuario\nPuede contener hasta 10 imágenes y opcionalmente audio">
+            <column name="id" type="bigint" autoIncrement="true" startWith="1500">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="titulo" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="audio_filename" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="tiene_audio" type="boolean">
+                <constraints nullable="false" />
+            </column>
+            <column name="duracion_transicion" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="estado" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="fecha_creacion" type="${datetimeType}">
+                <constraints nullable="false" />
+            </column>
+            <column name="fecha_descarga" type="${datetimeType}">
+                <constraints nullable="true" />
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+        <dropDefaultValue tableName="video" columnName="fecha_creacion" columnDataType="${datetimeType}"/>
+        <dropDefaultValue tableName="video" columnName="fecha_descarga" columnDataType="${datetimeType}"/>
+    </changeSet>
+
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Load sample data generated with Faker.js
+        - This data can be easily edited using a CSV editor (or even MS Excel) and
+          is located in the 'src/main/resources/config/liquibase/fake-data' directory
+        - By default this data is applied when running with the JHipster 'dev' profile.
+          This can be customized by adding or removing 'faker' in the 'spring.liquibase.contexts'
+          Spring Boot configuration key.
+    -->
+    <changeSet id="20251218202500-1-data" author="jhipster" context="faker">
+        <loadData
+                  file="config/liquibase/fake-data/video.csv"
+                  separator=";"
+                  tableName="video"
+                  usePreparedStatements="true">
+            <column name="id" type="numeric"/>
+            <column name="titulo" type="string"/>
+            <column name="audio_filename" type="string"/>
+            <column name="tiene_audio" type="boolean"/>
+            <column name="duracion_transicion" type="numeric"/>
+            <column name="estado" type="string"/>
+            <column name="fecha_creacion" type="date"/>
+            <column name="fecha_descarga" type="date"/>
+            <column name="user_id" type="numeric"/>
+            <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,9 @@
+export enum EstadoVideo {
+  EN_PROCESO = 'EN_PROCESO',
+
+  COMPLETADO = 'COMPLETADO',
+
+  DESCARGADO = 'DESCARGADO',
+
+  ERROR = 'ERROR',
+}

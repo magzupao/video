@@ -1,0 +1,37 @@
+{
+  "annotations": {
+    "changelogDate": "20251218202400"
+  },
+  "applications": ["video"],
+  "documentation": "Créditos del usuario para generar videos\\nSe crea automáticamente al registrarse con 1 crédito disponible",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "videosConsumidos",
+      "fieldType": "Integer",
+      "fieldValidateRules": ["required", "min"],
+      "fieldValidateRulesMin": "0"
+    },
+    {
+      "fieldName": "videosDisponibles",
+      "fieldType": "Integer",
+      "fieldValidateRules": ["required", "min"],
+      "fieldValidateRulesMin": "0"
+    }
+  ],
+  "name": "VideoCredito",
+  "pagination": "pagination",
+  "relationships": [
+    {
+      "otherEntityField": "login",
+      "otherEntityName": "user",
+      "relationshipName": "user",
+      "relationshipSide": "left",
+      "relationshipType": "one-to-one",
+      "relationshipValidateRules": "required",
+      "relationshipWithBuiltInEntity": true
+    }
+  ],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}

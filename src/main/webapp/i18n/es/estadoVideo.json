@@ -1,0 +1,11 @@
+{
+  "videoApp": {
+    "EstadoVideo": {
+      "null": "",
+      "EN_PROCESO": "EN_PROCESO",
+      "COMPLETADO": "COMPLETADO",
+      "DESCARGADO": "DESCARGADO",
+      "ERROR": "ERROR"
+    }
+  }
+}

@@ -1,0 +1,188 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <form name="editForm" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2 id="jhi-video-heading" data-cy="VideoCreateUpdateHeading" jhiTranslate="videoApp.video.home.createOrEditLabel">
+        Create or edit a Video
+      </h2>
+
+      <div>
+        <jhi-alert-error />
+
+        @if (editForm.controls.id.value !== null) {
+          <div class="mb-3">
+            <label class="form-label" for="field_id" jhiTranslate="videoApp.video.id">ID</label>
+            <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+          </div>
+        }
+
+        @let tituloRef = editForm.get('titulo')!;
+        <div class="mb-3">
+          <label class="form-label" for="field_titulo" jhiTranslate="videoApp.video.titulo">Titulo</label>
+          <input type="text" class="form-control" name="titulo" id="field_titulo" data-cy="titulo" formControlName="titulo" />
+          @if (tituloRef.invalid && (tituloRef.dirty || tituloRef.touched)) {
+            <div>
+              @if (editForm.get('titulo')?.errors?.maxlength) {
+                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: '255' }"
+                  >This field cannot be longer than 255 characters.</small
+                >
+              }
+            </div>
+          }
+        </div>
+
+        @let audioFilenameRef = editForm.get('audioFilename')!;
+        <div class="mb-3">
+          <label class="form-label" for="field_audioFilename" jhiTranslate="videoApp.video.audioFilename">Audio Filename</label>
+          <input
+            type="text"
+            class="form-control"
+            name="audioFilename"
+            id="field_audioFilename"
+            data-cy="audioFilename"
+            formControlName="audioFilename"
+          />
+          @if (audioFilenameRef.invalid && (audioFilenameRef.dirty || audioFilenameRef.touched)) {
+            <div>
+              @if (editForm.get('audioFilename')?.errors?.maxlength) {
+                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: '255' }"
+                  >This field cannot be longer than 255 characters.</small
+                >
+              }
+            </div>
+          }
+        </div>
+
+        @let tieneAudioRef = editForm.get('tieneAudio')!;
+        <div class="mb-3">
+          <label class="form-label" for="field_tieneAudio" jhiTranslate="videoApp.video.tieneAudio">Tiene Audio</label>
+          <input
+            type="checkbox"
+            class="form-check"
+            name="tieneAudio"
+            id="field_tieneAudio"
+            data-cy="tieneAudio"
+            formControlName="tieneAudio"
+          />
+          @if (tieneAudioRef.invalid && (tieneAudioRef.dirty || tieneAudioRef.touched)) {
+            <div>
+              @if (editForm.get('tieneAudio')?.errors?.required) {
+                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="field_duracionTransicion" jhiTranslate="videoApp.video.duracionTransicion"
+            >Duracion Transicion</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="duracionTransicion"
+            id="field_duracionTransicion"
+            data-cy="duracionTransicion"
+            formControlName="duracionTransicion"
+          />
+        </div>
+
+        @let estadoRef = editForm.get('estado')!;
+        <div class="mb-3">
+          <label class="form-label" for="field_estado" jhiTranslate="videoApp.video.estado">Estado</label>
+          <select class="form-control" name="estado" formControlName="estado" id="field_estado" data-cy="estado">
+            <option [ngValue]="null">{{ 'videoApp.EstadoVideo.null' | translate }}</option>
+            @for (estadoVideo of estadoVideoValues; track $index) {
+              <option [value]="estadoVideo">{{ 'videoApp.EstadoVideo.' + estadoVideo | translate }}</option>
+            }
+          </select>
+          @if (estadoRef.invalid && (estadoRef.dirty || estadoRef.touched)) {
+            <div>
+              @if (editForm.get('estado')?.errors?.required) {
+                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
+              }
+            </div>
+          }
+        </div>
+
+        @let fechaCreacionRef = editForm.get('fechaCreacion')!;
+        <div class="mb-3">
+          <label class="form-label" for="field_fechaCreacion" jhiTranslate="videoApp.video.fechaCreacion">Fecha Creacion</label>
+          <div class="d-flex">
+            <input
+              id="field_fechaCreacion"
+              data-cy="fechaCreacion"
+              type="datetime-local"
+              class="form-control"
+              name="fechaCreacion"
+              formControlName="fechaCreacion"
+              placeholder="YYYY-MM-DD HH:mm"
+            />
+          </div>
+          @if (fechaCreacionRef.invalid && (fechaCreacionRef.dirty || fechaCreacionRef.touched)) {
+            <div>
+              @if (editForm.get('fechaCreacion')?.errors?.required) {
+                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
+              }
+              <small
+                class="form-text text-danger"
+                [hidden]="!editForm.get('fechaCreacion')?.errors?.datetimelocal"
+                jhiTranslate="entity.validation.datetimelocal"
+                >This field should be a date and time.</small
+              >
+            </div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="field_fechaDescarga" jhiTranslate="videoApp.video.fechaDescarga">Fecha Descarga</label>
+          <div class="d-flex">
+            <input
+              id="field_fechaDescarga"
+              data-cy="fechaDescarga"
+              type="datetime-local"
+              class="form-control"
+              name="fechaDescarga"
+              formControlName="fechaDescarga"
+              placeholder="YYYY-MM-DD HH:mm"
+            />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="field_user" jhiTranslate="videoApp.video.user">User</label>
+          <select class="form-control" id="field_user" data-cy="user" name="user" formControlName="user" [compareWith]="compareUser">
+            @if (!editForm.get('user')!.value) {
+              <option [ngValue]="null" selected></option>
+            }
+            @for (userOption of usersSharedCollection(); track $index) {
+              <option [ngValue]="userOption">{{ userOption.login }}</option>
+            }
+          </select>
+        </div>
+        @if (editForm.get(['user'])!.invalid && (editForm.get(['user'])!.dirty || editForm.get(['user'])!.touched)) {
+          <div>
+            @if (editForm.get(['user'])?.errors?.required) {
+              <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
+            }
+          </div>
+        }
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

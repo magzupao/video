@@ -1,0 +1,107 @@
+// ============================================
+// CONFIGURACIÓN DE LA APLICACIÓN
+// ============================================
+
+application {
+  config {
+    applicationType monolith
+    authenticationType jwt
+    baseName video
+    buildTool maven
+    cacheProvider no
+    clientFramework angular
+    clientTheme none
+    databaseType sql
+    devDatabaseType postgresql
+    enableHibernateCache false
+    enableTranslation true
+    languages [en, es]
+    nativeLanguage en
+    packageName com.video.app
+    prodDatabaseType postgresql
+    reactive true
+    serverPort 8080
+    withAdminUi true
+  }
+  entities *
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum EstadoVideo {
+  EN_PROCESO,
+  COMPLETADO,
+  DESCARGADO,
+  ERROR
+}
+
+// ============================================
+// ENTIDADES
+// ============================================
+
+/**
+ * Créditos del usuario para generar videos
+ * Se crea automáticamente al registrarse con 1 crédito disponible
+ */
+entity VideoCredito {
+  videosConsumidos Integer required min(0)
+  videosDisponibles Integer required min(0)
+}
+
+/**
+ * Video generado por el usuario
+ * Puede contener hasta 10 imágenes y opcionalmente audio
+ */
+entity Video {
+  titulo String maxlength(255)
+  audioFilename String maxlength(255)
+  tieneAudio Boolean required
+  duracionTransicion Integer
+  estado EstadoVideo required
+  fechaCreacion Instant required
+  fechaDescarga Instant
+}
+
+/**
+ * Imágenes que componen el video
+ * Máximo 10 imágenes por video
+ */
+entity VideoImagen {
+  filename String required maxlength(255)
+  orden Integer required min(0) max(9)
+  duracionIndividual Integer
+}
+
+// ============================================
+// RELACIONES
+// ============================================
+
+// VideoCredito vinculado al User de JHipster (OneToOne)
+relationship OneToOne {
+  VideoCredito{user(login) required} to User with builtInEntity
+}
+
+// Video vinculado al User de JHipster (ManyToOne)
+relationship ManyToOne {
+  Video{user(login) required} to User with builtInEntity
+}
+
+// Un Video puede tener muchas VideoImagen (OneToMany)
+relationship OneToMany {
+  Video{imagenes} to VideoImagen{video required}
+}
+
+// ============================================
+// CONFIGURACIONES
+// ============================================
+
+// Paginación
+paginate Video, VideoImagen, VideoCredito with pagination
+
+// Servicios
+service all with serviceImpl
+
+// DTOs
+dto all with mapstruct

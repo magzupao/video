@@ -1,0 +1,50 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    @if (videoImagen(); as videoImagenRef) {
+      <div>
+        <h2 data-cy="videoImagenDetailsHeading"><span jhiTranslate="videoApp.videoImagen.detail.title">Video Imagen</span></h2>
+
+        <hr />
+
+        <jhi-alert-error />
+
+        <jhi-alert />
+
+        <dl class="row-md jh-entity-details">
+          <dt><span jhiTranslate="global.field.id">ID</span></dt>
+          <dd>
+            <span>{{ videoImagenRef.id }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.videoImagen.filename">Filename</span></dt>
+          <dd>
+            <span>{{ videoImagenRef.filename }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.videoImagen.orden">Orden</span></dt>
+          <dd>
+            <span>{{ videoImagenRef.orden }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.videoImagen.duracionIndividual">Duracion Individual</span></dt>
+          <dd>
+            <span>{{ videoImagenRef.duracionIndividual }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.videoImagen.video">Video</span></dt>
+          <dd>
+            @if (videoImagen()!.video) {
+              <div>
+                <a [routerLink]="['/video', videoImagen()!.video?.id, 'view']">{{ videoImagenRef.video?.id }}</a>
+              </div>
+            }
+          </dd>
+        </dl>
+
+        <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+          <fa-icon icon="arrow-left" />&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+
+        <button type="button" [routerLink]="['/video-imagen', videoImagenRef.id, 'edit']" class="btn btn-primary">
+          <fa-icon icon="pencil-alt" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+        </button>
+      </div>
+    }
+  </div>
+</div>

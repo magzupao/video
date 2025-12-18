@@ -1,0 +1,41 @@
+{
+  "annotations": {
+    "changelogDate": "20251218202600"
+  },
+  "applications": ["video"],
+  "documentation": "Imágenes que componen el video\\nMáximo 10 imágenes por video",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "filename",
+      "fieldType": "String",
+      "fieldValidateRules": ["required", "maxlength"],
+      "fieldValidateRulesMaxlength": "255"
+    },
+    {
+      "fieldName": "orden",
+      "fieldType": "Integer",
+      "fieldValidateRules": ["required", "min", "max"],
+      "fieldValidateRulesMax": "9",
+      "fieldValidateRulesMin": "0"
+    },
+    {
+      "fieldName": "duracionIndividual",
+      "fieldType": "Integer"
+    }
+  ],
+  "name": "VideoImagen",
+  "pagination": "pagination",
+  "relationships": [
+    {
+      "otherEntityName": "video",
+      "otherEntityRelationshipName": "imagenes",
+      "relationshipName": "video",
+      "relationshipSide": "right",
+      "relationshipType": "many-to-one",
+      "relationshipValidateRules": "required"
+    }
+  ],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}

@@ -1,0 +1,26 @@
+{
+  "videoApp": {
+    "videoCredito": {
+      "home": {
+        "title": "Video Creditos",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Video Credito",
+        "createOrEditLabel": "Crear o editar Video Credito",
+        "notFound": "Ningún Video Creditos encontrado"
+      },
+      "created": "Un nuevo Video Credito ha sido creado con el identificador {{ param }}",
+      "updated": "Un Video Credito ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Video Credito ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Video Credito {{ id }}?"
+      },
+      "detail": {
+        "title": "Video Credito"
+      },
+      "id": "ID",
+      "videosConsumidos": "Videos Consumidos",
+      "videosDisponibles": "Videos Disponibles",
+      "user": "User"
+    }
+  }
+}

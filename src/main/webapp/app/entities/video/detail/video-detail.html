@@ -1,0 +1,66 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    @if (video(); as videoRef) {
+      <div>
+        <h2 data-cy="videoDetailsHeading"><span jhiTranslate="videoApp.video.detail.title">Video</span></h2>
+
+        <hr />
+
+        <jhi-alert-error />
+
+        <jhi-alert />
+
+        <dl class="row-md jh-entity-details">
+          <dt><span jhiTranslate="global.field.id">ID</span></dt>
+          <dd>
+            <span>{{ videoRef.id }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.titulo">Titulo</span></dt>
+          <dd>
+            <span>{{ videoRef.titulo }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.audioFilename">Audio Filename</span></dt>
+          <dd>
+            <span>{{ videoRef.audioFilename }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.tieneAudio">Tiene Audio</span></dt>
+          <dd>
+            <span>{{ videoRef.tieneAudio }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.duracionTransicion">Duracion Transicion</span></dt>
+          <dd>
+            <span>{{ videoRef.duracionTransicion }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.estado">Estado</span></dt>
+          <dd>
+            <span [jhiTranslate]="'videoApp.EstadoVideo.' + (videoRef.estado ?? 'null')">{{
+              { null: '', EN_PROCESO: 'EN_PROCESO', COMPLETADO: 'COMPLETADO', DESCARGADO: 'DESCARGADO', ERROR: 'ERROR' }[
+                videoRef.estado ?? 'null'
+              ]
+            }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.fechaCreacion">Fecha Creacion</span></dt>
+          <dd>
+            <span>{{ videoRef.fechaCreacion | formatMediumDatetime }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.fechaDescarga">Fecha Descarga</span></dt>
+          <dd>
+            <span>{{ videoRef.fechaDescarga | formatMediumDatetime }}</span>
+          </dd>
+          <dt><span jhiTranslate="videoApp.video.user">User</span></dt>
+          <dd>
+            <span>{{ videoRef.user?.login }}</span>
+          </dd>
+        </dl>
+
+        <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+          <fa-icon icon="arrow-left" />&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+
+        <button type="button" [routerLink]="['/video', videoRef.id, 'edit']" class="btn btn-primary">
+          <fa-icon icon="pencil-alt" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+        </button>
+      </div>
+    }
+  </div>
+</div>

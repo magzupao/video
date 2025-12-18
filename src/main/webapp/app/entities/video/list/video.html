@@ -1,0 +1,166 @@
+<div>
+  <h2 id="page-heading" data-cy="VideoHeading">
+    <span jhiTranslate="videoApp.video.home.title">Videos</span>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
+        <fa-icon icon="sync" [animation]="isLoading ? 'spin' : undefined" />
+        <span jhiTranslate="videoApp.video.home.refreshListLabel">Refresh list</span>
+      </button>
+
+      <button
+        id="jh-create-entity"
+        data-cy="entityCreateButton"
+        class="btn btn-primary jh-create-entity create-video"
+        [routerLink]="['/video/new']"
+      >
+        <fa-icon icon="plus" />
+        <span jhiTranslate="videoApp.video.home.createLabel">Create a new Video</span>
+      </button>
+    </div>
+  </h2>
+
+  <jhi-alert-error />
+
+  <jhi-alert />
+
+  @if (videos().length === 0) {
+    <div class="alert alert-warning" id="no-result">
+      <span jhiTranslate="videoApp.video.home.notFound">No Videos found</span>
+    </div>
+  } @else {
+    <div class="table-responsive table-entities" id="entities">
+      <table class="table table-striped" aria-describedby="page-heading">
+        <thead>
+          <tr jhiSort [(sortState)]="sortState" (sortChange)="navigateToWithComponentValues($event)">
+            <th scope="col" jhiSortBy="id">
+              <div class="d-flex">
+                <span jhiTranslate="global.field.id">ID</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="titulo">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.titulo">Titulo</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="audioFilename">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.audioFilename">Audio Filename</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="tieneAudio">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.tieneAudio">Tiene Audio</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="duracionTransicion">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.duracionTransicion">Duracion Transicion</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="estado">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.estado">Estado</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="fechaCreacion">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.fechaCreacion">Fecha Creacion</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="fechaDescarga">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.fechaDescarga">Fecha Descarga</span>
+
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col" jhiSortBy="user.login">
+              <div class="d-flex">
+                <span jhiTranslate="videoApp.video.user">User</span>
+                <fa-icon class="p-1" icon="sort" />
+              </div>
+            </th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (video of videos(); track trackId(video)) {
+            <tr data-cy="entityTable">
+              <td>
+                <a [routerLink]="['/video', video.id, 'view']">{{ video.id }}</a>
+              </td>
+              <td>{{ video.titulo }}</td>
+              <td>{{ video.audioFilename }}</td>
+              <td>{{ video.tieneAudio }}</td>
+              <td>{{ video.duracionTransicion }}</td>
+              <td [jhiTranslate]="'videoApp.EstadoVideo.' + (video.estado ?? 'null')">
+                {{
+                  { null: '', EN_PROCESO: 'EN_PROCESO', COMPLETADO: 'COMPLETADO', DESCARGADO: 'DESCARGADO', ERROR: 'ERROR' }[
+                    video.estado ?? 'null'
+                  ]
+                }}
+              </td>
+              <td>{{ video.fechaCreacion | formatMediumDatetime }}</td>
+              <td>{{ video.fechaDescarga | formatMediumDatetime }}</td>
+              <td>
+                {{ video.user?.login }}
+              </td>
+              <td class="text-end">
+                <div class="btn-group">
+                  <a [routerLink]="['/video', video.id, 'view']" class="btn btn-info btn-sm" data-cy="entityDetailsButton">
+                    <fa-icon icon="eye" />
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                  </a>
+
+                  <a [routerLink]="['/video', video.id, 'edit']" class="btn btn-primary btn-sm" data-cy="entityEditButton">
+                    <fa-icon icon="pencil-alt" />
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                  </a>
+
+                  <button type="submit" (click)="delete(video)" class="btn btn-danger btn-sm" data-cy="entityDeleteButton">
+                    <fa-icon icon="times" />
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (videos().length > 0) {
+    <div>
+      <div class="d-flex justify-content-center">
+        <jhi-item-count [params]="{ page, totalItems, itemsPerPage }" />
+      </div>
+
+      <div class="d-flex justify-content-center">
+        <ngb-pagination
+          [collectionSize]="totalItems"
+          [page]="page"
+          [pageSize]="itemsPerPage"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          (pageChange)="navigateToPage($event)"
+        />
+      </div>
+    </div>
+  }
+</div>

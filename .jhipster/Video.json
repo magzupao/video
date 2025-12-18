@@ -1,0 +1,68 @@
+{
+  "annotations": {
+    "changelogDate": "20251218202500"
+  },
+  "applications": ["video"],
+  "documentation": "Video generado por el usuario\\nPuede contener hasta 10 imágenes y opcionalmente audio",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "titulo",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "255"
+    },
+    {
+      "fieldName": "audioFilename",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "255"
+    },
+    {
+      "fieldName": "tieneAudio",
+      "fieldType": "Boolean",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "duracionTransicion",
+      "fieldType": "Integer"
+    },
+    {
+      "fieldName": "estado",
+      "fieldType": "EstadoVideo",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "EN_PROCESO,COMPLETADO,DESCARGADO,ERROR"
+    },
+    {
+      "fieldName": "fechaCreacion",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "fechaDescarga",
+      "fieldType": "Instant"
+    }
+  ],
+  "name": "Video",
+  "pagination": "pagination",
+  "relationships": [
+    {
+      "otherEntityName": "videoImagen",
+      "otherEntityRelationshipName": "video",
+      "relationshipName": "imagenes",
+      "relationshipSide": "left",
+      "relationshipType": "one-to-many"
+    },
+    {
+      "otherEntityField": "login",
+      "otherEntityName": "user",
+      "relationshipName": "user",
+      "relationshipSide": "left",
+      "relationshipType": "many-to-one",
+      "relationshipValidateRules": "required",
+      "relationshipWithBuiltInEntity": true
+    }
+  ],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}
