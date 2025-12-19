@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -15,6 +15,12 @@ import { IVideo } from '../video.model';
 
 import { VideoFormGroup, VideoFormService } from './video-form.service';
 
+// Nueva interfaz para manejar las imágenes con preview
+interface ImageWithPreview {
+  file: File;
+  preview: string;
+}
+
 @Component({
   selector: 'jhi-video-update',
   templateUrl: './video-update.html',
@@ -24,10 +30,12 @@ export class VideoUpdate implements OnInit {
   isSaving = false;
   video: IVideo | null = null;
   estadoVideoValues = Object.keys(EstadoVideo);
-  selectedImages: File[] = [];
+  selectedImages: File[] = []; // Mantiene los File originales
+  imagesWithPreview: ImageWithPreview[] = []; // Nueva propiedad para los previews
   imagesError: string | null = null;
   usersSharedCollection = signal<IUser[]>([]);
 
+  protected cdr = inject(ChangeDetectorRef);
   protected videoService = inject(VideoService);
   protected videoFormService = inject(VideoFormService);
   protected userService = inject(UserService);
@@ -56,8 +64,11 @@ export class VideoUpdate implements OnInit {
   save(): void {
     this.isSaving = true;
 
+    this.editForm.disable();
+
     if (!this.isImagesValid()) {
       this.isSaving = false;
+      this.editForm.enable();
       this.imagesError = this.imagesError ?? 'Selecciona entre 1 y 10 imágenes.';
       return;
     }
@@ -90,14 +101,15 @@ export class VideoUpdate implements OnInit {
     if (totalImages > 10) {
       const available = 10 - this.selectedImages.length;
       if (available > 0) {
-        this.selectedImages = [...this.selectedImages, ...files.slice(0, available)];
+        const filesToAdd = files.slice(0, available);
+        this.addFilesWithPreviews(filesToAdd);
         this.imagesError = `Solo puedes agregar ${available} imagen(es) más. Máximo 10 en total.`;
       } else {
         this.imagesError = 'Ya tienes 10 imágenes. No puedes agregar más.';
       }
     } else {
       // CONCATENAR con spread operator
-      this.selectedImages = [...this.selectedImages, ...files];
+      this.addFilesWithPreviews(files);
       this.imagesError = null;
     }
 
@@ -105,8 +117,30 @@ export class VideoUpdate implements OnInit {
     input.value = '';
   }
 
+  private addFilesWithPreviews(files: File[]): void {
+    files.forEach(file => {
+      this.selectedImages.push(file);
+
+      const reader = new FileReader();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        // Crear un NUEVO array en lugar de hacer push
+        this.imagesWithPreview = [
+          ...this.imagesWithPreview,
+          {
+            file: file,
+            preview: e.target?.result as string,
+          },
+        ];
+        this.cdr.markForCheck();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   removeImage(index: number): void {
-    this.selectedImages = this.selectedImages.filter((_, i) => i !== index);
+    this.selectedImages.splice(index, 1);
+    this.imagesWithPreview.splice(index, 1);
+
     if (this.selectedImages.length === 0) {
       this.imagesError = 'Debes seleccionar al menos 1 imagen.';
     } else if (this.selectedImages.length <= 10) {
@@ -143,6 +177,7 @@ export class VideoUpdate implements OnInit {
 
   protected onSaveFinalize(): void {
     this.isSaving = false;
+    this.editForm.enable();
   }
 
   protected updateForm(video: IVideo): void {

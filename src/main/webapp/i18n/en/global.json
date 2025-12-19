@@ -101,6 +101,7 @@
       "edit": "Edit",
       "open": "Open",
       "save": "Save",
+      "saving": "Saving...",
       "view": "View",
       "show": "Show {{otherEntity}}"
     },

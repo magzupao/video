@@ -178,12 +178,21 @@
             <div class="form-text text-danger">{{ imagesError }}</div>
           }
 
-          @if (selectedImages.length > 0) {
-            <ul class="mt-2 mb-0">
-              @for (f of selectedImages; track $index) {
-                <li class="d-flex align-items-center gap-2">
-                  <span>{{ f.name }}</span>
-                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeImage($index)">Quitar</button>
+          @if (imagesWithPreview.length > 0) {
+            <ul class="list-unstyled mt-2 mb-0">
+              @for (img of imagesWithPreview; track $index) {
+                <li class="mb-2">
+                  <div class="row align-items-center g-2">
+                    <div class="col-auto">
+                      <img [src]="img.preview" alt="Preview" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover" />
+                    </div>
+                    <div class="col">
+                      <span class="text-truncate d-inline-block" style="max-width: 100%">{{ img.file.name }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeImage($index)">Quitar</button>
+                    </div>
+                  </div>
                 </li>
               }
             </ul>
@@ -204,6 +213,17 @@
           class="btn btn-primary"
         >
           <fa-icon icon="save" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+          <!-- Overlay de guardado -->
+          @if (isSaving) {
+            <div class="saving-overlay">
+              <div class="saving-spinner">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-primary fw-bold">Guardando video e imágenes...</p>
+              </div>
+            </div>
+          }
         </button>
       </div>
     </form>

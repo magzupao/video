@@ -101,6 +101,7 @@
       "edit": "Editar",
       "open": "Abrir",
       "save": "Guardar",
+      "saving": "Guardando..",
       "view": "Vista",
       "show": "Show {{otherEntity}}"
     },
