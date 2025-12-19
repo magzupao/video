@@ -34,16 +34,16 @@ spring:
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   liquibase:
     contexts: prod
-    url: jdbc:postgresql://localhost:5432/video
+    url: jdbc:postgresql://postgresql:5432/video
   mail:
     host: localhost
     port: 25
     username:
     password:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/video
+    url: r2dbc:postgresql://postgresql:5432/video
     username: video
-    password:
+    password: gestionvideo.*2269
   thymeleaf:
     cache: true
 

@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class ApplicationConfigService {
-  private endpointPrefix = '';
+  private endpointPrefix = '/';
   private microfrontend = false;
 
   setEndpointPrefix(endpointPrefix: string): void {
@@ -23,6 +23,7 @@ export class ApplicationConfigService {
     if (microservice) {
       return `${this.endpointPrefix}services/${microservice}/${api}`;
     }
-    return `${this.endpointPrefix}${api}`;
+    const normalizedApi = api.startsWith('/') ? api : `/${api}`;
+    return `${this.endpointPrefix}${normalizedApi}`.replace('//', '/');
   }
 }

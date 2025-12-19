@@ -6,10 +6,14 @@ import com.video.app.service.dto.VideoDTO;
 import com.video.app.web.rest.errors.BadRequestAlertException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,10 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.ForwardedHeaderUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
@@ -74,6 +80,47 @@ public class VideoResource {
                     throw new RuntimeException(e);
                 }
             });
+    }
+
+    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<VideoDTO>> createVideoMultipart(
+        @Valid @RequestPart("video") VideoDTO videoDTO,
+        @RequestPart("images") List<FilePart> images
+    ) {
+        LOG.debug("REST request to save Video (multipart) : {}", videoDTO);
+
+        if (videoDTO.getId() != null) {
+            throw new BadRequestAlertException("A new video cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+
+        return saveImagesToDisk(images)
+            .then(videoService.save(videoDTO))
+            .map(result -> {
+                try {
+                    return ResponseEntity.created(new URI("/api/videos/" + result.getId()))
+                        .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                        .body(result);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+    }
+
+    private Mono<Void> saveImagesToDisk(List<FilePart> images) {
+        Path rootPath = Path.of(System.getProperty("user.dir"), "uploads");
+
+        try {
+            Files.createDirectories(rootPath);
+        } catch (IOException e) {
+            return Mono.error(e);
+        }
+
+        return Flux.fromIterable(images)
+            .flatMap(file -> {
+                Path destination = rootPath.resolve(UUID.randomUUID() + "-" + file.filename());
+                return file.transferTo(destination);
+            })
+            .then();
     }
 
     /**

@@ -166,6 +166,29 @@
             }
           </div>
         }
+
+        <div class="mb-3">
+          <label class="form-label" for="field_images">Imágenes (1 a 10)</label>
+
+          <input id="field_images" type="file" class="form-control" accept="image/*" multiple (change)="onImagesSelected($event)" />
+
+          <small class="form-text text-muted"> Seleccionadas: {{ selectedImages.length }} / 10 </small>
+
+          @if (imagesError) {
+            <div class="form-text text-danger">{{ imagesError }}</div>
+          }
+
+          @if (selectedImages.length > 0) {
+            <ul class="mt-2 mb-0">
+              @for (f of selectedImages; track $index) {
+                <li class="d-flex align-items-center gap-2">
+                  <span>{{ f.name }}</span>
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeImage($index)">Quitar</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </div>
 
       <div>
@@ -177,7 +200,7 @@
           type="submit"
           id="save-entity"
           data-cy="entityCreateSaveButton"
-          [disabled]="editForm.invalid || isSaving"
+          [disabled]="editForm.invalid || isSaving || !isImagesValid()"
           class="btn btn-primary"
         >
           <fa-icon icon="save" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>

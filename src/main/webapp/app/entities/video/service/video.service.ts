@@ -32,16 +32,36 @@ export class VideoService {
 
   protected resourceUrl = this.applicationConfigService.getEndpointFor('api/videos');
 
-  create(video: NewVideo): Observable<EntityResponseType> {
+  create(video: NewVideo, images?: File[]): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(video);
+
+    if (images && images.length > 0) {
+      const formData = this.buildFormData(copy, images);
+      return this.http
+        .post<RestVideo>(this.resourceUrl, formData, { observe: 'response' })
+        .pipe(map(res => this.convertResponseFromServer(res)));
+    }
+
     return this.http.post<RestVideo>(this.resourceUrl, copy, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  update(video: IVideo): Observable<EntityResponseType> {
+  update(video: IVideo, images?: File[]): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(video);
-    return this.http
-      .put<RestVideo>(`${this.resourceUrl}/${encodeURIComponent(this.getVideoIdentifier(video))}`, copy, { observe: 'response' })
-      .pipe(map(res => this.convertResponseFromServer(res)));
+    const url = `${this.resourceUrl}/${encodeURIComponent(this.getVideoIdentifier(video))}`;
+
+    if (images && images.length > 0) {
+      const formData = this.buildFormData(copy, images);
+      return this.http.put<RestVideo>(url, formData, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
+    }
+
+    return this.http.put<RestVideo>(url, copy, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
+  }
+
+  private buildFormData(videoRest: RestVideo | NewRestVideo, images: File[]): FormData {
+    const fd = new FormData();
+    fd.append('video', new Blob([JSON.stringify(videoRest)], { type: 'application/json' }));
+    images.forEach(f => fd.append('images', f, f.name));
+    return fd;
   }
 
   partialUpdate(video: PartialUpdateVideo): Observable<EntityResponseType> {

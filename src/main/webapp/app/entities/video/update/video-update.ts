@@ -24,7 +24,8 @@ export class VideoUpdate implements OnInit {
   isSaving = false;
   video: IVideo | null = null;
   estadoVideoValues = Object.keys(EstadoVideo);
-
+  selectedImages: File[] = [];
+  imagesError: string | null = null;
   usersSharedCollection = signal<IUser[]>([]);
 
   protected videoService = inject(VideoService);
@@ -54,12 +55,75 @@ export class VideoUpdate implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const video = this.videoFormService.getVideo(this.editForm);
-    if (video.id === null) {
-      this.subscribeToSaveResponse(this.videoService.create(video));
-    } else {
-      this.subscribeToSaveResponse(this.videoService.update(video));
+
+    if (!this.isImagesValid()) {
+      this.isSaving = false;
+      this.imagesError = this.imagesError ?? 'Selecciona entre 1 y 10 imágenes.';
+      return;
     }
+
+    const video = this.videoFormService.getVideo(this.editForm);
+
+    if (video.id === null) {
+      this.subscribeToSaveResponse(this.videoService.create(video, this.selectedImages));
+    } else {
+      this.subscribeToSaveResponse(this.videoService.update(video, this.selectedImages));
+    }
+  }
+
+  onImagesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+
+    const files = Array.from(input.files);
+
+    // valida tipo imagen
+    if (files.some(f => !f.type.startsWith('image/'))) {
+      this.imagesError = 'Solo se permiten archivos de imagen.';
+      input.value = '';
+      return;
+    }
+
+    // ACUMULAR en lugar de reemplazar
+    const totalImages = this.selectedImages.length + files.length;
+
+    if (totalImages > 10) {
+      const available = 10 - this.selectedImages.length;
+      if (available > 0) {
+        this.selectedImages = [...this.selectedImages, ...files.slice(0, available)];
+        this.imagesError = `Solo puedes agregar ${available} imagen(es) más. Máximo 10 en total.`;
+      } else {
+        this.imagesError = 'Ya tienes 10 imágenes. No puedes agregar más.';
+      }
+    } else {
+      // CONCATENAR con spread operator
+      this.selectedImages = [...this.selectedImages, ...files];
+      this.imagesError = null;
+    }
+
+    // Limpiar el input
+    input.value = '';
+  }
+
+  removeImage(index: number): void {
+    this.selectedImages = this.selectedImages.filter((_, i) => i !== index);
+    if (this.selectedImages.length === 0) {
+      this.imagesError = 'Debes seleccionar al menos 1 imagen.';
+    } else if (this.selectedImages.length <= 10) {
+      this.imagesError = null;
+    }
+  }
+
+  isImagesValid(): boolean {
+    return this.selectedImages.length >= 1 && this.selectedImages.length <= 10 && !this.imagesError;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IVideo>>): void {
