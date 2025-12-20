@@ -1,7 +1,12 @@
 package com.video.app.web.rest;
 
+import com.video.app.domain.User;
+import com.video.app.domain.enumeration.EstadoVideo;
+import com.video.app.repository.UserRepository;
 import com.video.app.repository.VideoRepository;
+import com.video.app.security.SecurityUtils;
 import com.video.app.service.VideoService;
+import com.video.app.service.dto.UserDTO;
 import com.video.app.service.dto.VideoDTO;
 import com.video.app.web.rest.errors.BadRequestAlertException;
 import jakarta.validation.Valid;
@@ -11,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -24,6 +30,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.ForwardedHeaderUtils;
@@ -51,9 +59,12 @@ public class VideoResource {
 
     private final VideoRepository videoRepository;
 
-    public VideoResource(VideoService videoService, VideoRepository videoRepository) {
+    private final UserRepository userRepository;
+
+    public VideoResource(VideoService videoService, VideoRepository videoRepository, UserRepository userRepository) {
         this.videoService = videoService;
         this.videoRepository = videoRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -82,18 +93,65 @@ public class VideoResource {
             });
     }
 
+    /**
+     * {@code POST  /videos} : Create a new video with images and optional audio.
+     *
+     * @param videoDTO the videoDTO to create.
+     * @param images the list of image files.
+     * @param audio the optional audio file.
+     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new videoDTO.
+     */
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<VideoDTO>> createVideoMultipart(
         @Valid @RequestPart("video") VideoDTO videoDTO,
-        @RequestPart("images") List<FilePart> images
+        @RequestPart("images") List<FilePart> images,
+        @RequestPart(value = "audio", required = false) FilePart audio,
+        @AuthenticationPrincipal Jwt jwt
     ) {
-        LOG.debug("REST request to save Video (multipart) : {}", videoDTO);
+        // ✅ INYECTAR JWT AQUÍ
+
+        LOG.info("REST request to save Video (multipart) : {}", videoDTO);
+        LOG.info("Number of images received: {}", images != null ? images.size() : 0);
+        LOG.info("Audio file received: {}", audio != null ? audio.filename() : "none");
 
         if (videoDTO.getId() != null) {
             throw new BadRequestAlertException("A new video cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        return saveImagesToDisk(images)
+        videoDTO.setTitulo("video-" + UUID.randomUUID());
+        videoDTO.setAudioFilename(audio != null ? audio.filename() : null);
+        if (videoDTO.getTieneAudio()) {
+            videoDTO.setTieneAudio(true);
+        } else {
+            videoDTO.setTieneAudio(false);
+            videoDTO.setDuracionTransicion(0);
+        }
+        videoDTO.setEstado(EstadoVideo.EN_PROCESO);
+        videoDTO.setFechaCreacion(Instant.now());
+
+        if (videoDTO.getUser() == null) {
+            // ✅ OBTENER EL USERNAME DEL JWT
+            String currentUserLogin = jwt.getClaimAsString("sub"); // "sub" es el claim estándar del username
+
+            if (currentUserLogin == null || currentUserLogin.isEmpty()) {
+                throw new RuntimeException("No hay usuario autenticado");
+            }
+
+            User user = userRepository.findOneByLogin(currentUserLogin).block();
+
+            if (user == null) {
+                throw new RuntimeException("Usuario no encontrado: " + currentUserLogin);
+            }
+
+            // Crear UserDTO
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setLogin(user.getLogin());
+
+            videoDTO.setUser(userDTO);
+        }
+
+        return saveFilesToDisk(images, audio)
             .then(videoService.save(videoDTO))
             .map(result -> {
                 try {
@@ -106,21 +164,43 @@ public class VideoResource {
             });
     }
 
-    private Mono<Void> saveImagesToDisk(List<FilePart> images) {
-        Path rootPath = Path.of(System.getProperty("user.dir"), "uploads");
+    /**
+     * Saves images and optional audio to disk.
+     *
+     * @param images list of image files
+     * @param audio optional audio file
+     * @return Mono<Void> indicating completion
+     */
+    private Mono<Void> saveFilesToDisk(List<FilePart> images, FilePart audio) {
+        Path imagesPath = Path.of(System.getProperty("user.dir"), "uploads", "images");
+        Path audioPath = Path.of(System.getProperty("user.dir"), "uploads", "audio");
 
         try {
-            Files.createDirectories(rootPath);
+            Files.createDirectories(imagesPath);
+            Files.createDirectories(audioPath);
         } catch (IOException e) {
             return Mono.error(e);
         }
 
-        return Flux.fromIterable(images)
+        // Guardar imágenes
+        Mono<Void> imagesMono = Flux.fromIterable(images)
             .flatMap(file -> {
-                Path destination = rootPath.resolve(UUID.randomUUID() + "-" + file.filename());
+                Path destination = imagesPath.resolve(UUID.randomUUID() + "-" + file.filename());
+                LOG.debug("Saving image to: {}", destination);
                 return file.transferTo(destination);
             })
             .then();
+
+        // Guardar audio si existe
+        Mono<Void> audioMono = audio != null
+            ? Mono.defer(() -> {
+                  Path destination = audioPath.resolve(UUID.randomUUID() + "-" + audio.filename());
+                  LOG.debug("Saving audio to: {}", destination);
+                  return audio.transferTo(destination);
+              })
+            : Mono.empty();
+
+        return Mono.when(imagesMono, audioMono);
     }
 
     /**
@@ -155,6 +235,56 @@ public class VideoResource {
 
                 return videoService
                     .update(videoDTO)
+                    .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND)))
+                    .map(result ->
+                        ResponseEntity.ok()
+                            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                            .body(result)
+                    );
+            });
+    }
+
+    /**
+     * {@code PUT  /videos/:id} : Updates an existing video with images and optional audio.
+     *
+     * @param id the id of the videoDTO to save.
+     * @param videoDTO the videoDTO to update.
+     * @param images the list of image files.
+     * @param audio the optional audio file.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated videoDTO.
+     */
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<VideoDTO>> updateVideoMultipart(
+        @PathVariable(value = "id", required = false) final Long id,
+        @Valid @RequestPart("video") VideoDTO videoDTO,
+        @RequestPart(value = "images", required = false) List<FilePart> images,
+        @RequestPart(value = "audio", required = false) FilePart audio
+    ) {
+        LOG.debug("REST request to update Video (multipart) : {}, {}", id, videoDTO);
+        LOG.debug("Number of images received: {}", images != null ? images.size() : 0);
+        LOG.debug("Audio file received: {}", audio != null ? audio.filename() : "none");
+
+        if (videoDTO.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, videoDTO.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        return videoRepository
+            .existsById(id)
+            .flatMap(exists -> {
+                if (!exists) {
+                    return Mono.error(new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound"));
+                }
+
+                Mono<Void> filesMono = Mono.empty();
+                if ((images != null && !images.isEmpty()) || audio != null) {
+                    filesMono = saveFilesToDisk(images != null ? images : List.of(), audio);
+                }
+
+                return filesMono
+                    .then(videoService.update(videoDTO))
                     .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND)))
                     .map(result ->
                         ResponseEntity.ok()

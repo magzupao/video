@@ -19,15 +19,6 @@
         <div class="mb-3">
           <label class="form-label" for="field_titulo" jhiTranslate="videoApp.video.titulo">Titulo</label>
           <input type="text" class="form-control" name="titulo" id="field_titulo" data-cy="titulo" formControlName="titulo" />
-          @if (tituloRef.invalid && (tituloRef.dirty || tituloRef.touched)) {
-            <div>
-              @if (editForm.get('titulo')?.errors?.maxlength) {
-                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: '255' }"
-                  >This field cannot be longer than 255 characters.</small
-                >
-              }
-            </div>
-          }
         </div>
 
         @let audioFilenameRef = editForm.get('audioFilename')!;
@@ -41,15 +32,6 @@
             data-cy="audioFilename"
             formControlName="audioFilename"
           />
-          @if (audioFilenameRef.invalid && (audioFilenameRef.dirty || audioFilenameRef.touched)) {
-            <div>
-              @if (editForm.get('audioFilename')?.errors?.maxlength) {
-                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: '255' }"
-                  >This field cannot be longer than 255 characters.</small
-                >
-              }
-            </div>
-          }
         </div>
 
         @let tieneAudioRef = editForm.get('tieneAudio')!;
@@ -63,13 +45,6 @@
             data-cy="tieneAudio"
             formControlName="tieneAudio"
           />
-          @if (tieneAudioRef.invalid && (tieneAudioRef.dirty || tieneAudioRef.touched)) {
-            <div>
-              @if (editForm.get('tieneAudio')?.errors?.required) {
-                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
-              }
-            </div>
-          }
         </div>
 
         <div class="mb-3">
@@ -95,13 +70,6 @@
               <option [value]="estadoVideo">{{ 'videoApp.EstadoVideo.' + estadoVideo | translate }}</option>
             }
           </select>
-          @if (estadoRef.invalid && (estadoRef.dirty || estadoRef.touched)) {
-            <div>
-              @if (editForm.get('estado')?.errors?.required) {
-                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
-              }
-            </div>
-          }
         </div>
 
         @let fechaCreacionRef = editForm.get('fechaCreacion')!;
@@ -118,19 +86,6 @@
               placeholder="YYYY-MM-DD HH:mm"
             />
           </div>
-          @if (fechaCreacionRef.invalid && (fechaCreacionRef.dirty || fechaCreacionRef.touched)) {
-            <div>
-              @if (editForm.get('fechaCreacion')?.errors?.required) {
-                <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
-              }
-              <small
-                class="form-text text-danger"
-                [hidden]="!editForm.get('fechaCreacion')?.errors?.datetimelocal"
-                jhiTranslate="entity.validation.datetimelocal"
-                >This field should be a date and time.</small
-              >
-            </div>
-          }
         </div>
 
         <div class="mb-3">
@@ -159,14 +114,39 @@
             }
           </select>
         </div>
-        @if (editForm.get(['user'])!.invalid && (editForm.get(['user'])!.dirty || editForm.get(['user'])!.touched)) {
-          <div>
-            @if (editForm.get(['user'])?.errors?.required) {
-              <small class="form-text text-danger" jhiTranslate="entity.validation.required">This field is required.</small>
-            }
-          </div>
-        }
 
+        <!-- SECCIÓN DE CARGA DE AUDIO -->
+        <div class="mb-3">
+          <label class="form-label" for="field_audio">Archivo de Audio (opcional)</label>
+
+          <input
+            id="field_audio"
+            type="file"
+            class="form-control"
+            accept="audio/*,.mp3,.wav,.ogg,.m4a"
+            (change)="onAudioSelected($event)"
+          />
+
+          <small class="form-text text-muted"> Formatos aceptados: MP3, WAV, OGG, M4A </small>
+
+          @if (audioError) {
+            <div class="form-text text-danger">{{ audioError }}</div>
+          }
+
+          @if (selectedAudio) {
+            <div class="mt-2 p-2 border rounded">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <strong>{{ selectedAudio.name }}</strong>
+                  <small class="text-muted d-block">{{ formatFileSize(selectedAudio.size) }}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAudio()">Quitar</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- SECCIÓN DE CARGA DE IMÁGENES -->
         <div class="mb-3">
           <label class="form-label" for="field_images">Imágenes (1 a 10)</label>
 
@@ -220,7 +200,7 @@
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem">
                   <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-3 text-primary fw-bold">Guardando video e imágenes...</p>
+                <p class="mt-3 text-primary fw-bold">Guardando video, audio e imágenes...</p>
               </div>
             </div>
           }

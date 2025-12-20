@@ -32,11 +32,11 @@ export class VideoService {
 
   protected resourceUrl = this.applicationConfigService.getEndpointFor('api/videos');
 
-  create(video: NewVideo, images?: File[]): Observable<EntityResponseType> {
+  create(video: NewVideo, images?: File[], audio?: File | null): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(video);
 
-    if (images && images.length > 0) {
-      const formData = this.buildFormData(copy, images);
+    if ((images && images.length > 0) || audio) {
+      const formData = this.buildFormData(copy, images, audio);
       return this.http
         .post<RestVideo>(this.resourceUrl, formData, { observe: 'response' })
         .pipe(map(res => this.convertResponseFromServer(res)));
@@ -45,22 +45,34 @@ export class VideoService {
     return this.http.post<RestVideo>(this.resourceUrl, copy, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  update(video: IVideo, images?: File[]): Observable<EntityResponseType> {
+  update(video: IVideo, images?: File[], audio?: File | null): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(video);
     const url = `${this.resourceUrl}/${encodeURIComponent(this.getVideoIdentifier(video))}`;
 
-    if (images && images.length > 0) {
-      const formData = this.buildFormData(copy, images);
+    if ((images && images.length > 0) || audio) {
+      const formData = this.buildFormData(copy, images, audio);
       return this.http.put<RestVideo>(url, formData, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
     }
 
     return this.http.put<RestVideo>(url, copy, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  private buildFormData(videoRest: RestVideo | NewRestVideo, images: File[]): FormData {
+  private buildFormData(videoRest: RestVideo | NewRestVideo, images?: File[], audio?: File | null): FormData {
     const fd = new FormData();
+
+    // Agregar el objeto video como JSON
     fd.append('video', new Blob([JSON.stringify(videoRest)], { type: 'application/json' }));
-    images.forEach(f => fd.append('images', f, f.name));
+
+    // Agregar las imágenes
+    if (images && images.length > 0) {
+      images.forEach(f => fd.append('images', f, f.name));
+    }
+
+    // Agregar el audio si existe
+    if (audio) {
+      fd.append('audio', audio, audio.name);
+    }
+
     return fd;
   }
 

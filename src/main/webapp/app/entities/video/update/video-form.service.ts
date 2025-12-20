@@ -57,28 +57,28 @@ export class VideoFormService {
         { value: videoRawValue.id, disabled: true },
         {
           nonNullable: true,
-          validators: [Validators.required],
+          validators: [],
         },
       ),
       titulo: new FormControl(videoRawValue.titulo, {
-        validators: [Validators.maxLength(255)],
+        validators: [],
       }),
       audioFilename: new FormControl(videoRawValue.audioFilename, {
-        validators: [Validators.maxLength(255)],
+        validators: [],
       }),
       tieneAudio: new FormControl(videoRawValue.tieneAudio, {
-        validators: [Validators.required],
+        validators: [],
       }),
       duracionTransicion: new FormControl(videoRawValue.duracionTransicion),
       estado: new FormControl(videoRawValue.estado, {
-        validators: [Validators.required],
+        validators: [],
       }),
       fechaCreacion: new FormControl(videoRawValue.fechaCreacion, {
-        validators: [Validators.required],
+        validators: [],
       }),
       fechaDescarga: new FormControl(videoRawValue.fechaDescarga),
       user: new FormControl(videoRawValue.user, {
-        validators: [Validators.required],
+        validators: [],
       }),
     });
   }

@@ -35,18 +35,15 @@ public class Video implements Serializable {
     @Column("audio_filename")
     private String audioFilename;
 
-    @NotNull(message = "must not be null")
     @Column("tiene_audio")
     private Boolean tieneAudio;
 
     @Column("duracion_transicion")
     private Integer duracionTransicion;
 
-    @NotNull(message = "must not be null")
     @Column("estado")
     private EstadoVideo estado;
 
-    @NotNull(message = "must not be null")
     @Column("fecha_creacion")
     private Instant fechaCreacion;
 

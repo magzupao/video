@@ -30,9 +30,16 @@ export class VideoUpdate implements OnInit {
   isSaving = false;
   video: IVideo | null = null;
   estadoVideoValues = Object.keys(EstadoVideo);
-  selectedImages: File[] = []; // Mantiene los File originales
-  imagesWithPreview: ImageWithPreview[] = []; // Nueva propiedad para los previews
+
+  // Propiedades para imágenes
+  selectedImages: File[] = [];
+  imagesWithPreview: ImageWithPreview[] = [];
   imagesError: string | null = null;
+
+  // Propiedades para audio
+  selectedAudio: File | null = null;
+  audioError: string | null = null;
+
   usersSharedCollection = signal<IUser[]>([]);
 
   protected cdr = inject(ChangeDetectorRef);
@@ -76,12 +83,72 @@ export class VideoUpdate implements OnInit {
     const video = this.videoFormService.getVideo(this.editForm);
 
     if (video.id === null) {
-      this.subscribeToSaveResponse(this.videoService.create(video, this.selectedImages));
+      this.subscribeToSaveResponse(this.videoService.create(video, this.selectedImages, this.selectedAudio));
     } else {
-      this.subscribeToSaveResponse(this.videoService.update(video, this.selectedImages));
+      this.subscribeToSaveResponse(this.videoService.update(video, this.selectedImages, this.selectedAudio));
     }
   }
 
+  /**
+   * Maneja la selección de archivo de audio
+   */
+  onAudioSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+
+    // Validar que sea un archivo de audio
+    const validAudioTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'];
+    const validExtensions = ['.mp3', '.wav', '.ogg', '.m4a'];
+
+    const isValidType = validAudioTypes.includes(file.type);
+    const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+
+    if (!isValidType && !hasValidExtension) {
+      this.audioError = 'Solo se permiten archivos de audio (MP3, WAV, OGG, M4A).';
+      input.value = '';
+      return;
+    }
+
+    // Validar tamaño máximo (por ejemplo, 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      this.audioError = 'El archivo de audio no debe superar los 50MB.';
+      input.value = '';
+      return;
+    }
+
+    this.selectedAudio = file;
+    this.audioError = null;
+
+    // Actualizar el campo audioFilename en el formulario
+    this.editForm.patchValue({
+      audioFilename: file.name,
+      tieneAudio: true,
+    });
+
+    // Limpiar el input
+    input.value = '';
+  }
+
+  /**
+   * Elimina el archivo de audio seleccionado
+   */
+  removeAudio(): void {
+    this.selectedAudio = null;
+    this.audioError = null;
+
+    // Actualizar el formulario
+    this.editForm.patchValue({
+      audioFilename: null,
+      tieneAudio: false,
+    });
+  }
+
+  /**
+   * Maneja la selección de imágenes
+   */
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
@@ -168,7 +235,7 @@ export class VideoUpdate implements OnInit {
   }
 
   protected onSaveSuccess(): void {
-    this.previousState();
+    //this.previousState();
   }
 
   protected onSaveError(): void {

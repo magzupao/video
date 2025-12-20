@@ -22,20 +22,16 @@ public class VideoDTO implements Serializable {
     @Size(max = 255)
     private String audioFilename;
 
-    @NotNull(message = "must not be null")
     private Boolean tieneAudio;
 
     private Integer duracionTransicion;
 
-    @NotNull(message = "must not be null")
     private EstadoVideo estado;
 
-    @NotNull(message = "must not be null")
     private Instant fechaCreacion;
 
     private Instant fechaDescarga;
 
-    @NotNull
     private UserDTO user;
 
     public Long getId() {

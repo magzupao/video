@@ -14,7 +14,7 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
     <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
-    <!--
+
     <include resource="org/springframework/boot/logging/logback/file-appender.xml" />
 
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
@@ -25,7 +25,6 @@
     <root level="${logging.level.root}">
         <appender-ref ref="ASYNC"/>
     </root>
-    -->
 
     <logger name="com.video.app" level="INFO"/>
 
@@ -69,6 +68,7 @@
     <springProperty name="log.level" source="logging.level.root" defaultValue="INFO" />
     <root level="${log.level}">
         <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC" />
     </root>
 
     <!-- Prevent logback from outputting its own status -->
