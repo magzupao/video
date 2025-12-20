@@ -5,7 +5,7 @@ put Sass variables here:
 eg $input-color: red;
 ****************************/
 // Override Bootstrap variables
-@import 'bootstrap-variables';
+@use 'bootstrap-variables' as *;
 // Import Bootstrap source files from node_modules
 @import 'bootstrap/scss/bootstrap';
 

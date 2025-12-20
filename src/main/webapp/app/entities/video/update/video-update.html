@@ -15,13 +15,11 @@
           </div>
         }
 
-        @let tituloRef = editForm.get('titulo')!;
         <div class="mb-3">
           <label class="form-label" for="field_titulo" jhiTranslate="videoApp.video.titulo">Titulo</label>
           <input type="text" class="form-control" name="titulo" id="field_titulo" data-cy="titulo" formControlName="titulo" />
         </div>
 
-        @let audioFilenameRef = editForm.get('audioFilename')!;
         <div class="mb-3">
           <label class="form-label" for="field_audioFilename" jhiTranslate="videoApp.video.audioFilename">Audio Filename</label>
           <input
@@ -34,7 +32,6 @@
           />
         </div>
 
-        @let tieneAudioRef = editForm.get('tieneAudio')!;
         <div class="mb-3">
           <label class="form-label" for="field_tieneAudio" jhiTranslate="videoApp.video.tieneAudio">Tiene Audio</label>
           <input
@@ -61,7 +58,6 @@
           />
         </div>
 
-        @let estadoRef = editForm.get('estado')!;
         <div class="mb-3">
           <label class="form-label" for="field_estado" jhiTranslate="videoApp.video.estado">Estado</label>
           <select class="form-control" name="estado" formControlName="estado" id="field_estado" data-cy="estado">
@@ -72,7 +68,6 @@
           </select>
         </div>
 
-        @let fechaCreacionRef = editForm.get('fechaCreacion')!;
         <div class="mb-3">
           <label class="form-label" for="field_fechaCreacion" jhiTranslate="videoApp.video.fechaCreacion">Fecha Creacion</label>
           <div class="d-flex">

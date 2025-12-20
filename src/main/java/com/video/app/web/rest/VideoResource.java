@@ -4,7 +4,6 @@ import com.video.app.domain.User;
 import com.video.app.domain.enumeration.EstadoVideo;
 import com.video.app.repository.UserRepository;
 import com.video.app.repository.VideoRepository;
-import com.video.app.security.SecurityUtils;
 import com.video.app.service.VideoService;
 import com.video.app.service.dto.UserDTO;
 import com.video.app.service.dto.VideoDTO;
