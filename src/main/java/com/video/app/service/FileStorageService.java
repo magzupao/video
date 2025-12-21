@@ -4,7 +4,6 @@ import com.video.app.service.dto.FileSystemPaths;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -27,45 +26,42 @@ public class FileStorageService {
      *            /app/shared-data/videos/{videoId}/audio/
      *            /app/shared-data/videos/{videoId}/output/
      */
-    public Mono<FileSystemPaths> saveFilesToDisk(String videoId, List<FilePart> images, FilePart audio) {
+    public Mono<FileSystemPaths> saveFilesToDisk(Long videoId, List<FilePart> images, FilePart audio) {
         LOG.info("=== Guardando archivos para video ID: {} ===", videoId);
         LOG.info("Número de imágenes: {}", images != null ? images.size() : 0);
         LOG.info("Audio: {}", audio != null ? audio.filename() : "sin audio");
 
-        // Estructura de directorios con ID único
+        if (images == null || images.isEmpty()) {
+            LOG.error("❌ No se recibieron imágenes para el video: {}", videoId);
+            return Mono.error(new RuntimeException("No se recibieron imágenes"));
+        }
+
         String baseDir = BASE_STORAGE_PATH + "/" + videoId;
         String imagesDir = baseDir + "/images";
         String audioDir = baseDir + "/audio";
         String outputDir = baseDir + "/output";
 
-        try {
-            // Crear directorios únicos para este video
+        Mono<Void> createDirs = Mono.fromCallable(() -> {
             Files.createDirectories(Path.of(imagesDir));
             Files.createDirectories(Path.of(audioDir));
             Files.createDirectories(Path.of(outputDir));
-            LOG.info("✅ Directorios creados: {}", baseDir);
-        } catch (IOException e) {
-            LOG.error("❌ Error creando directorios para video: {}", videoId, e);
-            return Mono.error(new RuntimeException("Error creando directorios", e));
-        }
+            return true;
+        })
+            .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+            .then()
+            .doOnSuccess(v -> LOG.info("✅ Directorios creados: {}", baseDir));
 
-        // Guardar imágenes con nombres ordenados
-        List<Mono<Void>> imageSaves = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            for (int i = 0; i < images.size(); i++) {
-                FilePart image = images.get(i);
-                // Nombres ordenados: image_000.jpg, image_001.jpg, etc.
+        Flux<Void> saveImages = Flux.fromIterable(images)
+            .index()
+            .flatMap(tuple -> {
+                long i = tuple.getT1();
+                FilePart image = tuple.getT2();
                 String filename = String.format("image_%03d.jpg", i);
                 Path imagePath = Path.of(imagesDir, filename);
                 LOG.debug("Guardando imagen {}/{}: {}", i + 1, images.size(), filename);
-                imageSaves.add(image.transferTo(imagePath));
-            }
-        } else {
-            LOG.error("❌ No se recibieron imágenes para el video: {}", videoId);
-            return Mono.error(new RuntimeException("No se recibieron imágenes"));
-        }
+                return image.transferTo(imagePath);
+            });
 
-        // Guardar audio si existe
         Mono<Void> audioSave = Mono.empty();
         String finalAudioPath = null;
 
@@ -74,14 +70,15 @@ public class FileStorageService {
             Path audioPath = Path.of(audioDir, audioFilename);
             LOG.info("Guardando audio: {}", audioFilename);
             audioSave = audio.transferTo(audioPath);
-            finalAudioPath = audioDir;
+            finalAudioPath = audioPath.toString();
         }
 
         String audioPathFinal = finalAudioPath;
 
-        return Flux.concat(imageSaves)
+        return createDirs
+            .thenMany(saveImages)
             .then(audioSave)
-            .then(Mono.just(new FileSystemPaths(imagesDir, audioPathFinal, outputDir)))
+            .thenReturn(new FileSystemPaths(imagesDir, audioPathFinal, outputDir))
             .doOnSuccess(paths -> {
                 LOG.info("✅ Archivos guardados exitosamente para video: {}", videoId);
                 LOG.info("   - Imágenes: {}", imagesDir);

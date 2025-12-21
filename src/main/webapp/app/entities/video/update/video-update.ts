@@ -1,10 +1,10 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef } from '@angular/core'; // ✏️ AÑADIDO OnDestroy
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
-import { Observable } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { Observable, interval, Subscription } from 'rxjs'; // ✏️ AÑADIDO interval, Subscription
+import { finalize, map, switchMap, takeWhile } from 'rxjs/operators'; // ✏️ AÑADIDO switchMap, takeWhile
 
 import { EstadoVideo } from 'app/entities/enumerations/estado-video.model';
 import { UserService } from 'app/entities/user/service/user.service';
@@ -26,7 +26,8 @@ interface ImageWithPreview {
   templateUrl: './video-update.html',
   imports: [SharedModule, ReactiveFormsModule],
 })
-export class VideoUpdate implements OnInit {
+export class VideoUpdate implements OnInit, OnDestroy {
+  // ✏️ AÑADIDO OnDestroy
   isSaving = false;
   video: IVideo | null = null;
   estadoVideoValues = Object.keys(EstadoVideo);
@@ -39,6 +40,12 @@ export class VideoUpdate implements OnInit {
   // Propiedades para audio
   selectedAudio: File | null = null;
   audioError: string | null = null;
+
+  // 🆕 Propiedades para polling
+  private pollingSubscription: Subscription | null = null;
+  isProcessing = false;
+  processingMessage = 'Guardando video, audio e imágenes...';
+  videoEstado: string | null = null;
 
   usersSharedCollection = signal<IUser[]>([]);
 
@@ -64,17 +71,26 @@ export class VideoUpdate implements OnInit {
     });
   }
 
+  // 🆕 NUEVO MÉTODO: Cleanup al destruir el componente
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
   previousState(): void {
     globalThis.history.back();
   }
 
+  // ✏️ MODIFICADO: Método save() completo
   save(): void {
     this.isSaving = true;
+    this.isProcessing = true;
+    this.processingMessage = 'Guardando video...';
 
     this.editForm.disable();
 
     if (!this.isImagesValid()) {
       this.isSaving = false;
+      this.isProcessing = false;
       this.editForm.enable();
       this.imagesError = this.imagesError ?? 'Selecciona entre 1 y 10 imágenes.';
       return;
@@ -83,9 +99,110 @@ export class VideoUpdate implements OnInit {
     const video = this.videoFormService.getVideo(this.editForm);
 
     if (video.id === null) {
-      this.subscribeToSaveResponse(this.videoService.create(video, this.selectedImages, this.selectedAudio));
+      // Crear nuevo video
+      this.videoService.create(video, this.selectedImages, this.selectedAudio).subscribe({
+        next: response => {
+          console.log('✅ Respuesta del servidor:', response);
+
+          if (response.status === 202 && response.body) {
+            // Video creado, procesamiento iniciado
+            const createdVideo = response.body;
+            console.log('🚀 Video creado con ID:', createdVideo.id);
+            console.log('⏳ Estado inicial:', createdVideo.estado);
+
+            this.processingMessage = 'Generando video... esto puede tardar varios minutos';
+            this.videoEstado = createdVideo.estado ?? null;
+
+            // Iniciar polling para verificar el estado
+            this.startPolling(createdVideo.id!);
+          } else {
+            console.warn('⚠️ Respuesta inesperada del servidor:', response.status);
+            this.onSaveError();
+          }
+        },
+        error: error => {
+          console.error('❌ Error creando video:', error);
+          this.onSaveError();
+        },
+      });
     } else {
+      // Actualizar video existente
       this.subscribeToSaveResponse(this.videoService.update(video, this.selectedImages, this.selectedAudio));
+    }
+  }
+
+  // 🆕 NUEVO MÉTODO: Inicia el polling para verificar el estado del video
+  private startPolling(videoId: number): void {
+    console.log('🔄 Iniciando polling para video ID:', videoId);
+
+    this.pollingSubscription = interval(3000) // Cada 3 segundos
+      .pipe(
+        switchMap(() => {
+          console.log('🔍 Consultando estado del video...');
+          return this.videoService.getVideoStatus(videoId);
+        }),
+        takeWhile(response => {
+          const video = response.body;
+          if (!video) {
+            console.warn('⚠️ No se recibió información del video');
+            return false;
+          }
+
+          const estado = video.estado;
+          this.videoEstado = estado ?? null;
+
+          console.log('📊 Estado actual:', estado);
+
+          // Actualizar mensaje según el estado
+          if (estado === 'EN_PROCESO') {
+            this.processingMessage = 'Generando video... esto puede tardar varios minutos';
+            return true; // Continuar polling
+          } else if (estado === 'COMPLETADO') {
+            this.processingMessage = '✅ Video generado exitosamente!';
+            return false; // Detener polling
+          } else if (estado === 'ERROR') {
+            this.processingMessage = '❌ Error generando el video';
+            return false; // Detener polling
+          }
+
+          return true; // Por defecto, continuar polling
+        }, true), // El 'true' permite que emita el último valor antes de completar
+        finalize(() => {
+          console.log('🏁 Polling finalizado');
+          this.onPollingComplete();
+        }),
+      )
+      .subscribe({
+        next: response => {
+          const video = response.body;
+          if (video) {
+            console.log('📦 Video recibido:', video);
+          }
+        },
+        error: error => {
+          console.error('❌ Error en polling:', error);
+          this.onSaveError();
+        },
+      });
+  }
+
+  // 🆕 NUEVO MÉTODO: Se ejecuta cuando el polling termina
+  private onPollingComplete(): void {
+    console.log('✅ Procesamiento completado');
+
+    if (this.videoEstado === 'COMPLETADO') {
+      this.onSaveSuccess();
+    } else if (this.videoEstado === 'ERROR') {
+      this.onSaveError();
+    }
+  }
+
+  // 🆕 NUEVO MÉTODO: Detiene el polling
+  private stopPolling(): void {
+    if (this.pollingSubscription) {
+      console.log('⏹️ Deteniendo polling');
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
     }
   }
 
@@ -242,9 +359,12 @@ export class VideoUpdate implements OnInit {
     // Api for inheritance.
   }
 
+  // ✏️ MODIFICADO: Añadido stopPolling()
   protected onSaveFinalize(): void {
     this.isSaving = false;
+    this.isProcessing = false;
     this.editForm.enable();
+    this.stopPolling();
   }
 
   protected updateForm(video: IVideo): void {

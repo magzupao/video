@@ -37,12 +37,29 @@ export class VideoService {
 
     if ((images && images.length > 0) || audio) {
       const formData = this.buildFormData(copy, images, audio);
-      return this.http
-        .post<RestVideo>(this.resourceUrl, formData, { observe: 'response' })
-        .pipe(map(res => this.convertResponseFromServer(res)));
+      return this.http.post<RestVideo>(this.resourceUrl, formData, { observe: 'response' }).pipe(
+        map(res => {
+          // El backend ahora retorna 202 Accepted para procesamiento asíncrono
+          if (res.status === 202) {
+            console.log('✅ Video creado, procesamiento iniciado (202 Accepted)');
+          }
+          return this.convertResponseFromServer(res);
+        }),
+      );
     }
 
     return this.http.post<RestVideo>(this.resourceUrl, copy, { observe: 'response' }).pipe(map(res => this.convertResponseFromServer(res)));
+  }
+
+  /**
+   * Obtiene el estado actual de un video (optimizado para polling).
+   * @param id - ID del video
+   * @returns Observable con el estado del video
+   */
+  getVideoStatus(id: number): Observable<EntityResponseType> {
+    return this.http
+      .get<RestVideo>(`${this.resourceUrl}/${encodeURIComponent(id)}/status`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(video: IVideo, images?: File[], audio?: File | null): Observable<EntityResponseType> {

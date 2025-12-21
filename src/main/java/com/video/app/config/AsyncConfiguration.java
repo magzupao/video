@@ -41,6 +41,42 @@ public class AsyncConfiguration implements AsyncConfigurer {
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
+    @Bean(name = "videoTaskExecutor")
+    public Executor videoTaskExecutor() {
+        LOG.info("Configurando ThreadPoolTaskExecutor para procesamiento asíncrono de videos");
+
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+        // Número de hilos base siempre activos
+        executor.setCorePoolSize(5);
+
+        // Máximo de hilos que pueden crearse
+        executor.setMaxPoolSize(10);
+
+        // Capacidad de la cola de tareas en espera
+        executor.setQueueCapacity(100);
+
+        // Prefijo para identificar los hilos en logs
+        executor.setThreadNamePrefix("video-async-");
+
+        // Esperar a que terminen las tareas antes de shutdown
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+
+        // Tiempo máximo de espera para shutdown (30 segundos)
+        executor.setAwaitTerminationSeconds(30);
+
+        executor.initialize();
+
+        LOG.info(
+            "ThreadPoolTaskExecutor configurado: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
+            executor.getCorePoolSize(),
+            executor.getMaxPoolSize(),
+            executor.getQueueCapacity()
+        );
+
+        return executor;
+    }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();

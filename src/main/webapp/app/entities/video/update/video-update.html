@@ -188,14 +188,41 @@
           class="btn btn-primary"
         >
           <fa-icon icon="save" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-          <!-- Overlay de guardado -->
-          @if (isSaving) {
+
+          <!-- ✏️ OVERLAY MODIFICADO CON MENSAJES DINÁMICOS -->
+          @if (isSaving || isProcessing) {
             <div class="saving-overlay">
               <div class="saving-spinner">
+                <!-- Spinner -->
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem">
                   <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-3 text-primary fw-bold">Guardando video, audio e imágenes...</p>
+
+                <!-- Mensaje principal dinámico -->
+                <p class="mt-3 text-primary fw-bold">{{ processingMessage }}</p>
+
+                <!-- Mensaje según el estado -->
+                @if (videoEstado === 'EN_PROCESO') {
+                  <small class="text-muted d-block mt-2">
+                    <i class="bi bi-info-circle"></i>
+                    El video se está generando en segundo plano.<br />
+                    Esto puede tardar varios minutos dependiendo del número de imágenes.
+                  </small>
+                }
+
+                @if (videoEstado === 'COMPLETADO') {
+                  <small class="text-success fw-bold d-block mt-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                    ✅ El video se generó correctamente
+                  </small>
+                }
+
+                @if (videoEstado === 'ERROR') {
+                  <small class="text-danger fw-bold d-block mt-2">
+                    <i class="bi bi-x-circle-fill"></i>
+                    ❌ Ocurrió un error al generar el video
+                  </small>
+                }
               </div>
             </div>
           }
