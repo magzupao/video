@@ -1,10 +1,14 @@
 package com.video.app.web.rest;
 
 import com.video.app.domain.User;
+import com.video.app.domain.Video;
 import com.video.app.domain.enumeration.EstadoVideo;
 import com.video.app.repository.UserRepository;
 import com.video.app.repository.VideoRepository;
+import com.video.app.service.FileStorageService;
+import com.video.app.service.PythonVideoService;
 import com.video.app.service.VideoService;
+import com.video.app.service.dto.PythonVideoResponse;
 import com.video.app.service.dto.UserDTO;
 import com.video.app.service.dto.VideoDTO;
 import com.video.app.web.rest.errors.BadRequestAlertException;
@@ -60,10 +64,22 @@ public class VideoResource {
 
     private final UserRepository userRepository;
 
-    public VideoResource(VideoService videoService, VideoRepository videoRepository, UserRepository userRepository) {
+    private final FileStorageService fileStorageService;
+
+    private final PythonVideoService pythonVideoService;
+
+    public VideoResource(
+        VideoService videoService,
+        VideoRepository videoRepository,
+        UserRepository userRepository,
+        FileStorageService fileStorageService,
+        PythonVideoService pythonVideoService
+    ) {
         this.videoService = videoService;
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
+        this.fileStorageService = fileStorageService;
+        this.pythonVideoService = pythonVideoService;
     }
 
     /**
@@ -107,59 +123,223 @@ public class VideoResource {
         @RequestPart(value = "audio", required = false) FilePart audio,
         @AuthenticationPrincipal Jwt jwt
     ) {
-        // ✅ INYECTAR JWT AQUÍ
-
+        LOG.info("=== INICIO createVideoMultipart ===");
         LOG.info("REST request to save Video (multipart) : {}", videoDTO);
         LOG.info("Number of images received: {}", images != null ? images.size() : 0);
         LOG.info("Audio file received: {}", audio != null ? audio.filename() : "none");
 
         if (videoDTO.getId() != null) {
+            LOG.error("❌ Video ya tiene ID: {}", videoDTO.getId());
             throw new BadRequestAlertException("A new video cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        videoDTO.setTitulo("video-" + UUID.randomUUID());
+        // Configurar datos iniciales del video
+        String videoTitle = "video-" + UUID.randomUUID().toString().substring(0, 8);
+        videoDTO.setTitulo(videoTitle);
         videoDTO.setAudioFilename(audio != null ? audio.filename() : null);
-        if (videoDTO.getTieneAudio()) {
-            videoDTO.setTieneAudio(true);
-        } else {
-            videoDTO.setTieneAudio(false);
-            videoDTO.setDuracionTransicion(0);
-        }
+        videoDTO.setTieneAudio(audio != null);
         videoDTO.setEstado(EstadoVideo.EN_PROCESO);
         videoDTO.setFechaCreacion(Instant.now());
 
-        if (videoDTO.getUser() == null) {
-            // ✅ OBTENER EL USERNAME DEL JWT
-            String currentUserLogin = jwt.getClaimAsString("sub"); // "sub" es el claim estándar del username
+        LOG.info("✅ Video configurado:");
+        LOG.info("   - Titulo: {}", videoDTO.getTitulo());
+        LOG.info("   - Audio filename: {}", videoDTO.getAudioFilename());
+        LOG.info("   - Tiene audio: {}", videoDTO.getTieneAudio());
+        LOG.info("   - Estado: {}", videoDTO.getEstado());
+        LOG.info("   - Formato: {}", videoDTO.getFormato());
 
-            if (currentUserLogin == null || currentUserLogin.isEmpty()) {
-                throw new RuntimeException("No hay usuario autenticado");
-            }
+        // Obtener usuario del JWT
+        String currentUserLogin = jwt.getClaimAsString("sub");
+        LOG.info("🔐 Usuario del JWT: {}", currentUserLogin);
 
-            User user = userRepository.findOneByLogin(currentUserLogin).block();
-
-            if (user == null) {
-                throw new RuntimeException("Usuario no encontrado: " + currentUserLogin);
-            }
-
-            // Crear UserDTO
-            UserDTO userDTO = new UserDTO();
-            userDTO.setId(user.getId());
-            userDTO.setLogin(user.getLogin());
-
-            videoDTO.setUser(userDTO);
+        if (currentUserLogin == null || currentUserLogin.isEmpty()) {
+            LOG.error("❌ No hay usuario autenticado en JWT");
+            return Mono.error(new RuntimeException("No hay usuario autenticado"));
         }
 
-        return saveFilesToDisk(images, audio)
-            .then(videoService.save(videoDTO))
-            .map(result -> {
-                try {
-                    return ResponseEntity.created(new URI("/api/videos/" + result.getId()))
-                        .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
-                        .body(result);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
+        LOG.info("🔍 Buscando usuario en BD: {}", currentUserLogin);
+
+        return userRepository
+            .findOneByLogin(currentUserLogin)
+            .doOnNext(user -> LOG.info("✅ Usuario encontrado - ID: {}, Login: {}", user.getId(), user.getLogin()))
+            .switchIfEmpty(
+                Mono.defer(() -> {
+                    LOG.error("❌ Usuario NO encontrado en BD: {}", currentUserLogin);
+                    return Mono.error(new RuntimeException("Usuario no encontrado: " + currentUserLogin));
+                })
+            )
+            .flatMap(user -> {
+                LOG.info("📝 Asignando usuario al VideoDTO...");
+                UserDTO userDTO = new UserDTO();
+                userDTO.setId(user.getId());
+                userDTO.setLogin(user.getLogin());
+                videoDTO.setUser(userDTO);
+
+                LOG.info("✅ Usuario asignado - User ID: {}, Login: {}", videoDTO.getUser().getId(), videoDTO.getUser().getLogin());
+
+                // ✅ PRIMERO: Guardar en BD para obtener ID único
+                LOG.info("💾 Intentando guardar video en BD...");
+                LOG.info("   VideoDTO antes de save: {}", videoDTO);
+
+                return videoService
+                    .save(videoDTO)
+                    .doOnSuccess(saved -> {
+                        LOG.info("✅ Video guardado EXITOSAMENTE en BD");
+                        LOG.info("   - ID generado: {}", saved.getId());
+                        LOG.info("   - Titulo: {}", saved.getTitulo());
+                        LOG.info("   - Estado: {}", saved.getEstado());
+                        LOG.info("   - User ID: {}", saved.getUser() != null ? saved.getUser().getId() : "NULL");
+                    })
+                    .doOnError(error -> {
+                        LOG.error("❌ ERROR guardando video en BD", error);
+                        LOG.error("   Tipo de error: {}", error.getClass().getName());
+                        LOG.error("   Mensaje: {}", error.getMessage());
+                    });
+            })
+            .flatMap(savedVideo -> {
+                // ✅ SEGUNDO: Usar el ID de BD como identificador único
+                String uniqueVideoId = savedVideo.getId().toString();
+                LOG.info("📁 Video creado con ID: {}", uniqueVideoId);
+                LOG.info("🗂️ Iniciando guardado de archivos en disco...");
+
+                // ✅ TERCERO: Guardar archivos usando el ID de BD
+                return fileStorageService
+                    .saveFilesToDisk(uniqueVideoId, images, audio)
+                    .doOnSuccess(paths -> {
+                        LOG.info("✅ Archivos guardados en disco");
+                        LOG.info("   - Images path: {}", paths.getImagesPath());
+                        LOG.info("   - Audio path: {}", paths.getAudioPath());
+                        LOG.info("   - Output path: {}", paths.getVideoOutputPath());
+                    })
+                    .doOnError(error -> {
+                        LOG.error("❌ ERROR guardando archivos en disco", error);
+                    })
+                    .flatMap(paths -> {
+                        // ✅ CUARTO: Llamar a Python para generar el video
+                        LOG.info("🐍 Preparando llamada a Python...");
+
+                        Mono<PythonVideoResponse> pythonCall;
+
+                        if (savedVideo.getTieneAudio() != null && savedVideo.getTieneAudio()) {
+                            LOG.info("🎵 Generando video CON audio");
+                            LOG.info("   - Images: {}", paths.getImagesPath());
+                            LOG.info("   - Audio: {}", paths.getAudioPath());
+                            LOG.info("   - Output: {}", paths.getVideoOutputPath());
+                            LOG.info("   - Format: {}", savedVideo.getFormato());
+
+                            pythonCall = pythonVideoService.generateVideoWithAudio(
+                                paths.getImagesPath(),
+                                paths.getAudioPath(),
+                                paths.getVideoOutputPath(),
+                                savedVideo.getFormato()
+                            );
+                        } else {
+                            LOG.info("🔇 Generando video SIN audio");
+                            LOG.info("   - Images: {}", paths.getImagesPath());
+                            LOG.info("   - Output: {}", paths.getVideoOutputPath());
+                            LOG.info("   - Format: {}", savedVideo.getFormato());
+                            LOG.info("   - Transición: {} segundos", savedVideo.getDuracionTransicion());
+
+                            pythonCall = pythonVideoService.generateVideoWithoutAudio(
+                                paths.getImagesPath(),
+                                paths.getVideoOutputPath(),
+                                savedVideo.getFormato(),
+                                savedVideo.getDuracionTransicion()
+                            );
+                        }
+
+                        return pythonCall
+                            .doOnSuccess(response -> {
+                                LOG.info("✅ Python respondió EXITOSAMENTE");
+                                LOG.info("   - Status: {}", response.getStatus());
+                                LOG.info("   - Video path: {}", response.getVideo_path());
+                                if (response.getMetadata() != null) {
+                                    LOG.info("   - Full path: {}", response.getMetadata().getFull_path());
+                                    LOG.info("   - Duration: {}", response.getMetadata().getDuration());
+                                    LOG.info("   - Images used: {}", response.getMetadata().getImages_used());
+                                }
+                            })
+                            .doOnError(error -> {
+                                LOG.error("❌ ERROR en llamada a Python", error);
+                                LOG.error("   Tipo: {}", error.getClass().getName());
+                                LOG.error("   Mensaje: {}", error.getMessage());
+                            })
+                            .flatMap(pythonResponse -> {
+                                // ✅ QUINTO: Actualizar video con metadata
+                                LOG.info("🔄 Actualizando video con metadata de Python...");
+
+                                savedVideo.setVideoPath(pythonResponse.getMetadata().getFull_path());
+                                savedVideo.setEstado(EstadoVideo.COMPLETADO);
+                                savedVideo.setDuracionTransicion(pythonResponse.getMetadata().getDuration().intValue());
+
+                                LOG.info("   - Nuevo estado: {}", savedVideo.getEstado());
+                                LOG.info("   - Video path: {}", savedVideo.getVideoPath());
+                                LOG.info("   - Duración: {}", savedVideo.getDuracionTransicion());
+
+                                return videoService
+                                    .update(savedVideo)
+                                    .doOnSuccess(updated -> {
+                                        LOG.info("✅ Video actualizado EXITOSAMENTE");
+                                        LOG.info("   - ID: {}", updated.getId());
+                                        LOG.info("   - Estado final: {}", updated.getEstado());
+                                    })
+                                    .doOnError(error -> {
+                                        LOG.error("❌ ERROR actualizando video en BD", error);
+                                    });
+                            })
+                            .onErrorResume(error -> {
+                                // Si falla, marcar como ERROR y limpiar archivos
+                                LOG.error("❌ ERROR en proceso de generación de video para ID: {}", uniqueVideoId, error);
+                                LOG.error("   Marcando video como ERROR...");
+
+                                savedVideo.setEstado(EstadoVideo.ERROR);
+
+                                return videoService
+                                    .update(savedVideo)
+                                    .doOnSuccess(v -> {
+                                        LOG.info("✅ Video marcado como ERROR en BD");
+                                        LOG.info("🗑️ Iniciando limpieza de archivos...");
+
+                                        // Limpiar archivos en caso de error (opcional)
+                                        fileStorageService
+                                            .cleanupFiles(uniqueVideoId)
+                                            .subscribe(
+                                                success -> LOG.info("✅ Archivos limpiados para video: {}", uniqueVideoId),
+                                                err -> LOG.error("❌ Error limpiando archivos", err)
+                                            );
+                                    })
+                                    .doOnError(updateError -> {
+                                        LOG.error("❌ ERROR marcando video como ERROR", updateError);
+                                    });
+                            });
+                    })
+                    .map(result -> {
+                        try {
+                            LOG.info("✅ Generando respuesta final");
+                            LOG.info("   - Video ID: {}", result.getId());
+                            LOG.info("   - Estado: {}", result.getEstado());
+                            LOG.info("   - Video path: {}", result.getVideoPath());
+                            LOG.info("=== FIN createVideoMultipart EXITOSO ===");
+
+                            return ResponseEntity.created(new URI("/api/videos/" + result.getId()))
+                                .headers(
+                                    HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())
+                                )
+                                .body(result);
+                        } catch (URISyntaxException e) {
+                            LOG.error("❌ Error creando URI", e);
+                            throw new RuntimeException(e);
+                        }
+                    });
+            })
+            .doOnError(error -> {
+                LOG.error("❌❌❌ ERROR FINAL en createVideoMultipart ❌❌❌", error);
+                LOG.error("   Tipo: {}", error.getClass().getName());
+                LOG.error("   Mensaje: {}", error.getMessage());
+                if (error.getCause() != null) {
+                    LOG.error("   Causa: {}", error.getCause().getMessage());
                 }
+                LOG.error("=== FIN createVideoMultipart CON ERROR ===");
             });
     }
 

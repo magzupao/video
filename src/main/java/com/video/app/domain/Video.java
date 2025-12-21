@@ -2,6 +2,7 @@ package com.video.app.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.video.app.domain.enumeration.EstadoVideo;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.*;
 import java.io.Serial;
 import java.io.Serializable;
@@ -59,6 +60,12 @@ public class Video implements Serializable {
 
     @Column("user_id")
     private Long userId;
+
+    @org.springframework.data.annotation.Transient
+    private String formato;
+
+    @org.springframework.data.annotation.Transient
+    private String videoPath;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
 
@@ -220,6 +227,21 @@ public class Video implements Serializable {
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
+    public String getFormato() {
+        return this.formato;
+    }
+
+    public void setFormato(String formato) {
+        this.formato = formato;
+    }
+
+    public String getVideoPath() {
+        return this.videoPath;
+    }
+
+    public void setVideoPath(String videoPath) {
+        this.videoPath = videoPath;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -250,6 +272,8 @@ public class Video implements Serializable {
             ", estado='" + getEstado() + "'" +
             ", fechaCreacion='" + getFechaCreacion() + "'" +
             ", fechaDescarga='" + getFechaDescarga() + "'" +
+            ", formato='" + getFormato() + "'" +
+            ", videoPath='" + getVideoPath() + "'" +
             "}";
     }
 }
