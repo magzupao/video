@@ -170,6 +170,8 @@ export class VideoUpdate implements OnInit, OnDestroy {
         finalize(() => {
           console.log('🏁 Polling finalizado');
           this.onPollingComplete();
+          this.onSaveFinalize();
+          this.cdr.detectChanges();
         }),
       )
       .subscribe({
