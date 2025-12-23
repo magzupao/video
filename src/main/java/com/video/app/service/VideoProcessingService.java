@@ -105,7 +105,10 @@ public class VideoProcessingService {
             // 4) Actualizar estado en BD
             LOG.info("💾 [{}] Actualizando video en BD con estado COMPLETADO...", videoId);
 
-            videoDTO.setVideoPath(pythonResponse.getMetadata().getFull_path());
+            String fullPath = pythonResponse.getMetadata().getFull_path();
+
+            videoDTO.setVideoPath(fullPath);
+            videoDTO.setOutputFilename(java.nio.file.Path.of(fullPath).getFileName().toString());
             videoDTO.setEstado(EstadoVideo.COMPLETADO);
             videoDTO.setDuracionTransicion(pythonResponse.getMetadata().getDuration().intValue());
 

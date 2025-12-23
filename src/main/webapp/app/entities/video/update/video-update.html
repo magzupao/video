@@ -229,5 +229,15 @@
         </button>
       </div>
     </form>
+
+    @if (videoEstado === 'COMPLETADO' && downloadUrl) {
+      <div class="mt-3 d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-success" (click)="downloadGeneratedVideo()" [disabled]="isDownloading">Descargar</button>
+
+        @if (outputFilename) {
+          <small class="text-muted">({{ outputFilename }})</small>
+        }
+      </div>
+    }
   </div>
 </div>

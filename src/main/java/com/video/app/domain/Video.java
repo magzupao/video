@@ -61,6 +61,12 @@ public class Video implements Serializable {
     @Column("user_id")
     private Long userId;
 
+    @Column("output_filename")
+    private String outputFilename;
+
+    @Column("download_url")
+    private String downloadUrl;
+
     @org.springframework.data.annotation.Transient
     private String formato;
 
@@ -241,6 +247,23 @@ public class Video implements Serializable {
 
     public void setVideoPath(String videoPath) {
         this.videoPath = videoPath;
+    }
+
+    // Getters y setters
+    public String getOutputFilename() {
+        return outputFilename;
+    }
+
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getDownloadUrl() {
+        return downloadUrl;
+    }
+
+    public void setDownloadUrl(String downloadUrl) {
+        this.downloadUrl = downloadUrl;
     }
 
     @Override

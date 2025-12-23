@@ -3,7 +3,6 @@ package com.video.app.service.dto;
 import com.video.app.domain.enumeration.EstadoVideo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-import java.beans.Transient;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -38,6 +37,10 @@ public class VideoDTO implements Serializable {
     private String formato;
 
     private String videoPath;
+
+    private String outputFilename; // nombre real del archivo (sin path)
+
+    private String downloadUrl; // /api/videos/{id}/download
 
     public Long getId() {
         return id;
@@ -127,6 +130,22 @@ public class VideoDTO implements Serializable {
         this.videoPath = videoPath;
     }
 
+    public String getOutputFilename() {
+        return outputFilename;
+    }
+
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getDownloadUrl() {
+        return downloadUrl;
+    }
+
+    public void setDownloadUrl(String downloadUrl) {
+        this.downloadUrl = downloadUrl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -163,6 +182,8 @@ public class VideoDTO implements Serializable {
             ", user=" + getUser() +
             ", formato='" + getFormato() + "'" +
             ", videoPath='" + getVideoPath() + "'" +
+            ", outputFilename='" + getOutputFilename() + "'" +
+            ", downloadUrl='" + getDownloadUrl() + "'" +
             "}";
     }
 }

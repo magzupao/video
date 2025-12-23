@@ -23,8 +23,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.ForwardedHeaderUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.reactive.ResponseUtil;
@@ -191,16 +195,36 @@ public class VideoResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the video status.
      */
     @GetMapping("/{id}/status")
-    public Mono<ResponseEntity<VideoDTO>> getVideoStatus(@PathVariable("id") Long id) {
-        LOG.debug("REST request to get Video status : {}", id);
+    public Mono<ResponseEntity<VideoDTO>> getVideoStatus(@PathVariable Long id) {
+        return videoService.findOne(id).map(ResponseEntity::ok); // ✅ Así de simple
+    }
 
-        return videoService
-            .findOne(id)
-            .map(videoDTO -> {
-                LOG.debug("Video {} status: {}", id, videoDTO.getEstado());
-                return ResponseEntity.ok().body(videoDTO);
-            })
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+    @GetMapping("/{id}/download")
+    public Mono<ResponseEntity<Resource>> downloadVideo(@PathVariable("id") Long id) {
+        return videoRepository
+            .findById(id)
+            .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Video no encontrado")))
+            .flatMap(video -> {
+                if (video.getEstado() != EstadoVideo.COMPLETADO || video.getVideoPath() == null) {
+                    return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "El video aún no está listo"));
+                }
+
+                Path filePath = Path.of(video.getVideoPath());
+                String filename = filePath.getFileName().toString();
+
+                FileSystemResource resource = new FileSystemResource(filePath);
+
+                return Mono.fromCallable(() -> {
+                    if (!resource.exists()) {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Archivo no existe en disco");
+                    }
+
+                    return ResponseEntity.ok()
+                        .contentType(MediaType.valueOf("video/mp4"))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                        .body((Resource) resource);
+                }).subscribeOn(Schedulers.boundedElastic());
+            });
     }
 
     /**

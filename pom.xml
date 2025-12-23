@@ -830,8 +830,8 @@
             </activation>
             <properties>
                 <!-- default Spring profiles -->
-                <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/video</liquibase-plugin.url>
+                <liquibase-plugin.password>gestionvideo.*2269</liquibase-plugin.password>
+                <liquibase-plugin.url>jdbc:postgresql://postgresql:5432/video</liquibase-plugin.url>
                 <liquibase-plugin.username>video</liquibase-plugin.username>
                 <profile.test>test,testdev</profile.test>
                 <spring.profiles.active>dev${profile.tls}${profile.no-liquibase}</spring.profiles.active>
@@ -940,8 +940,8 @@
             <id>prod</id>
             <properties>
                 <!-- default Spring profiles -->
-                <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:postgresql://localhost:5432/video</liquibase-plugin.url>
+                <liquibase-plugin.password>gestionvideo.*2269</liquibase-plugin.password>
+                <liquibase-plugin.url>jdbc:postgresql://postgresql:5432/video</liquibase-plugin.url>
                 <liquibase-plugin.username>video</liquibase-plugin.username>
                 <profile.test>test,testprod</profile.test>
                 <spring.profiles.active>prod${profile.api-docs}${profile.tls}${profile.e2e}${profile.no-liquibase}</spring.profiles.active>

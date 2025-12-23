@@ -13,6 +13,8 @@ export interface IVideo {
   fechaCreacion?: dayjs.Dayjs | null;
   fechaDescarga?: dayjs.Dayjs | null;
   user?: Pick<IUser, 'id' | 'login'> | null;
+  downloadUrl?: string | null;
+  outputFilename?: string | null;
 }
 
 export type NewVideo = Omit<IVideo, 'id'> & { id: null };

@@ -12,7 +12,18 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface VideoMapper extends EntityMapper<VideoDTO, Video> {
     @Mapping(target = "user", source = "user", qualifiedByName = "userLogin")
+    @Mapping(target = "videoPath", source = "videoPath")
+    @Mapping(target = "outputFilename", source = "outputFilename")
+    @Mapping(target = "downloadUrl", source = "downloadUrl")
     VideoDTO toDto(Video s);
+
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "videoPath", source = "videoPath")
+    @Mapping(target = "outputFilename", source = "outputFilename")
+    @Mapping(target = "downloadUrl", source = "downloadUrl")
+    @Mapping(target = "imagenes", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    Video toEntity(VideoDTO dto);
 
     @Named("userLogin")
     @BeanMapping(ignoreByDefault = true)

@@ -62,6 +62,13 @@ export class VideoService {
       .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
+  downloadVideo(id: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`/api/videos/${id}/download`, {
+      observe: 'response',
+      responseType: 'blob',
+    });
+  }
+
   update(video: IVideo, images?: File[], audio?: File | null): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(video);
     const url = `${this.resourceUrl}/${encodeURIComponent(this.getVideoIdentifier(video))}`;

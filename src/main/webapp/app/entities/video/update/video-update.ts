@@ -49,6 +49,12 @@ export class VideoUpdate implements OnInit, OnDestroy {
 
   usersSharedCollection = signal<IUser[]>([]);
 
+  generatedVideoId: number | null = null;
+  downloadUrl: string | null = null;
+  outputFilename: string | null = null;
+  isDownloading = false;
+  lastPolledVideo: IVideo | null = null;
+
   protected cdr = inject(ChangeDetectorRef);
   protected videoService = inject(VideoService);
   protected videoFormService = inject(VideoFormService);
@@ -110,6 +116,8 @@ export class VideoUpdate implements OnInit, OnDestroy {
             console.log('🚀 Video creado con ID:', createdVideo.id);
             console.log('⏳ Estado inicial:', createdVideo.estado);
 
+            this.generatedVideoId = createdVideo.id ?? null;
+
             this.processingMessage = 'Generando video... esto puede tardar varios minutos';
             this.videoEstado = createdVideo.estado ?? null;
 
@@ -150,6 +158,8 @@ export class VideoUpdate implements OnInit, OnDestroy {
 
           const estado = video.estado;
           this.videoEstado = estado ?? null;
+          this.lastPolledVideo = video; // ✅ guardo el DTO
+          this.generatedVideoId = video.id ?? videoId; // ✅ aseguro el id
 
           console.log('📊 Estado actual:', estado);
 
@@ -159,6 +169,8 @@ export class VideoUpdate implements OnInit, OnDestroy {
             return true; // Continuar polling
           } else if (estado === 'COMPLETADO') {
             this.processingMessage = '✅ Video generado exitosamente!';
+            this.downloadUrl = (video as any).downloadUrl ?? `/api/videos/${video.id ?? videoId}/download`;
+            this.outputFilename = (video as any).outputFilename ?? null;
             return false; // Detener polling
           } else if (estado === 'ERROR') {
             this.processingMessage = '❌ Error generando el video';
@@ -193,6 +205,14 @@ export class VideoUpdate implements OnInit, OnDestroy {
     console.log('✅ Procesamiento completado');
 
     if (this.videoEstado === 'COMPLETADO') {
+      // ✅ red de seguridad
+      if (!this.downloadUrl && this.lastPolledVideo?.id) {
+        this.downloadUrl = (this.lastPolledVideo as any).downloadUrl ?? `/api/videos/${this.lastPolledVideo.id}/download`;
+      }
+      if (!this.outputFilename) {
+        this.outputFilename = (this.lastPolledVideo as any).outputFilename ?? null;
+      }
+
       this.onSaveSuccess();
     } else if (this.videoEstado === 'ERROR') {
       this.onSaveError();
@@ -344,6 +364,42 @@ export class VideoUpdate implements OnInit, OnDestroy {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  downloadGeneratedVideo(): void {
+    if (!this.generatedVideoId || this.isDownloading) return;
+
+    this.isDownloading = true;
+
+    this.videoService.downloadVideo(this.generatedVideoId).subscribe({
+      next: res => {
+        const blob = res.body;
+        if (!blob) {
+          this.isDownloading = false;
+          return;
+        }
+
+        const cd = res.headers.get('content-disposition');
+        const headerName = cd?.match(/filename="(.+?)"/)?.[1] ?? null;
+
+        const filename = headerName ?? this.outputFilename ?? 'video.mp4';
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        this.isDownloading = false;
+      },
+      error: err => {
+        console.error('❌ Error descargando video', err);
+        this.isDownloading = false;
+      },
+    });
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IVideo>>): void {
