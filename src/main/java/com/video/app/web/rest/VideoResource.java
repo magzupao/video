@@ -201,29 +201,74 @@ public class VideoResource {
 
     @GetMapping("/{id}/download")
     public Mono<ResponseEntity<Resource>> downloadVideo(@PathVariable("id") Long id) {
+        LOG.info("=== Iniciando descarga de video ===");
+        LOG.info("ID solicitado: {}", id);
+
         return videoRepository
             .findById(id)
-            .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Video no encontrado")))
+            .doOnNext(video -> {
+                LOG.info("Video encontrado en BD:");
+                LOG.info("  - ID: {}", video.getId());
+                LOG.info("  - Título: {}", video.getTitulo());
+                LOG.info("  - Estado: {}", video.getEstado());
+                LOG.info("  - OutputFilename: {}", video.getOutputFilename());
+            })
+            .switchIfEmpty(
+                Mono.defer(() -> {
+                    LOG.error("Video con ID {} no encontrado en BD", id);
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Video no encontrado"));
+                })
+            )
             .flatMap(video -> {
-                if (video.getEstado() != EstadoVideo.COMPLETADO || video.getVideoPath() == null) {
+                if (video.getEstado() != EstadoVideo.COMPLETADO || video.getOutputFilename() == null) {
+                    LOG.warn("Video no está listo para descarga:");
+                    LOG.warn("  - Estado actual: {}", video.getEstado());
+                    LOG.warn("  - OutputFilename es null: {}", video.getOutputFilename() == null);
                     return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "El video aún no está listo"));
                 }
 
-                Path filePath = Path.of(video.getVideoPath());
-                String filename = filePath.getFileName().toString();
+                // ✅ CONSTRUIR PATH: /app/shared-data/videos/{id}/output/{filename}
+                String videoPath = String.format("/app/shared-data/videos/%d/output/%s", video.getId(), video.getOutputFilename());
+
+                Path filePath = Path.of(videoPath);
+                String filename = video.getOutputFilename();
+
+                LOG.info("Preparando descarga:");
+                LOG.info("  - Path construido: {}", videoPath);
+                LOG.info("  - Path absoluto: {}", filePath.toAbsolutePath());
+                LOG.info("  - Nombre archivo: {}", filename);
 
                 FileSystemResource resource = new FileSystemResource(filePath);
 
                 return Mono.fromCallable(() -> {
-                    if (!resource.exists()) {
+                    boolean exists = resource.exists();
+                    LOG.info("Verificando existencia del archivo:");
+                    LOG.info("  - Existe en disco: {}", exists);
+
+                    if (exists) {
+                        LOG.info("  - Path absoluto: {}", resource.getFile().getAbsolutePath());
+                        LOG.info("  - Es legible: {}", resource.isReadable());
+                        LOG.info("  - Tamaño: {} bytes", resource.contentLength());
+                    } else {
+                        LOG.error("❌ ARCHIVO NO EXISTE EN DISCO");
+                        LOG.error("Path buscado: {}", filePath.toAbsolutePath());
                         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Archivo no existe en disco");
                     }
 
+                    LOG.info("✅ Archivo encontrado, enviando respuesta");
                     return ResponseEntity.ok()
                         .contentType(MediaType.valueOf("video/mp4"))
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                         .body((Resource) resource);
-                }).subscribeOn(Schedulers.boundedElastic());
+                })
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .doOnSuccess(response -> LOG.info("✅ Descarga iniciada exitosamente para video ID: {}", id))
+                    .doOnError(error -> LOG.error("❌ Error durante la descarga del video ID {}: {}", id, error.getMessage()));
+            })
+            .doOnError(error -> {
+                if (!(error instanceof ResponseStatusException)) {
+                    LOG.error("❌ Error inesperado durante descarga:", error);
+                }
             });
     }
 

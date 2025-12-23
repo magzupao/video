@@ -35,6 +35,11 @@ public class VideoRowMapper implements BiFunction<Row, String, Video> {
         entity.setFechaCreacion(converter.fromRow(row, prefix + "_fecha_creacion", Instant.class));
         entity.setFechaDescarga(converter.fromRow(row, prefix + "_fecha_descarga", Instant.class));
         entity.setUserId(converter.fromRow(row, prefix + "_user_id", Long.class));
+
+        // ✅ AGREGAR ESTAS 2 LÍNEAS:
+        entity.setOutputFilename(converter.fromRow(row, prefix + "_output_filename", String.class));
+        entity.setDownloadUrl(converter.fromRow(row, prefix + "_download_url", String.class));
+
         return entity;
     }
 }

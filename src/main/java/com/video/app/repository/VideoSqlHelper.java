@@ -18,8 +18,12 @@ public class VideoSqlHelper {
         columns.add(Column.aliased("estado", table, columnPrefix + "_estado"));
         columns.add(Column.aliased("fecha_creacion", table, columnPrefix + "_fecha_creacion"));
         columns.add(Column.aliased("fecha_descarga", table, columnPrefix + "_fecha_descarga"));
-
         columns.add(Column.aliased("user_id", table, columnPrefix + "_user_id"));
+
+        // ✅ AGREGAR ESTAS 2 LÍNEAS:
+        columns.add(Column.aliased("output_filename", table, columnPrefix + "_output_filename"));
+        columns.add(Column.aliased("download_url", table, columnPrefix + "_download_url"));
+
         return columns;
     }
 }
