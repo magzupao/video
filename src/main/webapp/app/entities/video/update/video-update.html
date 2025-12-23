@@ -173,6 +173,15 @@
             </ul>
           }
         </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="field_formato" jhiTranslate="videoApp.video.formato">Formato de Video</label>
+          <select class="form-control" name="formato" formControlName="formato" id="field_formato" data-cy="formato">
+            <option value="v">{{ 'videoApp.FormatoVideo.VERTICAL' | translate }}</option>
+            <option value="h">{{ 'videoApp.FormatoVideo.HORIZONTAL' | translate }}</option>
+            <option value="c">{{ 'videoApp.FormatoVideo.CUADRADO' | translate }}</option>
+          </select>
+        </div>
       </div>
 
       <div>

@@ -15,6 +15,7 @@ export interface IVideo {
   user?: Pick<IUser, 'id' | 'login'> | null;
   downloadUrl?: string | null;
   outputFilename?: string | null;
+  formato?: string | null;
 }
 
 export type NewVideo = Omit<IVideo, 'id'> & { id: null };

@@ -7,6 +7,7 @@ import { Observable, interval, Subscription } from 'rxjs'; // ✏️ AÑADIDO in
 import { finalize, map, switchMap, takeWhile } from 'rxjs/operators'; // ✏️ AÑADIDO switchMap, takeWhile
 
 import { EstadoVideo } from 'app/entities/enumerations/estado-video.model';
+import { FormatoVideo } from 'app/entities/enumerations/formato-video.model';
 import { UserService } from 'app/entities/user/service/user.service';
 import { IUser } from 'app/entities/user/user.model';
 import SharedModule from 'app/shared/shared.module';
@@ -54,6 +55,8 @@ export class VideoUpdate implements OnInit, OnDestroy {
   outputFilename: string | null = null;
   isDownloading = false;
   lastPolledVideo: IVideo | null = null;
+
+  formatoVideoValues = Object.keys(FormatoVideo);
 
   protected cdr = inject(ChangeDetectorRef);
   protected videoService = inject(VideoService);

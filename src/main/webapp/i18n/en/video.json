@@ -26,7 +26,13 @@
       "fechaCreacion": "Fecha Creacion",
       "fechaDescarga": "Fecha Descarga",
       "imagenes": "Imagenes",
-      "user": "User"
+      "user": "User",
+      "formato": "Video Format"
+    },
+    "FormatoVideo": {
+      "VERTICAL": "Vertical",
+      "HORIZONTAL": "Horizontal",
+      "CUADRADO": "Square"
     }
   }
 }

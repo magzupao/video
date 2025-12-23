@@ -5,6 +5,7 @@ import dayjs from 'dayjs/esm';
 
 import { DATE_TIME_FORMAT } from 'app/config/input.constants';
 import { IVideo, NewVideo } from '../video.model';
+import { FormatoVideo } from 'app/entities/enumerations/formato-video.model'; // ✨ IMPORTAR
 
 /**
  * A partial Type with required key is used as form input.
@@ -29,7 +30,7 @@ type VideoFormRawValue = FormValueOf<IVideo>;
 
 type NewVideoFormRawValue = FormValueOf<NewVideo>;
 
-type VideoFormDefaults = Pick<NewVideo, 'id' | 'tieneAudio' | 'fechaCreacion' | 'fechaDescarga'>;
+type VideoFormDefaults = Pick<NewVideo, 'id' | 'tieneAudio' | 'fechaCreacion' | 'fechaDescarga' | 'formato'>; // ✨ AGREGAR 'formato'
 
 type VideoFormGroupContent = {
   id: FormControl<VideoFormRawValue['id'] | NewVideo['id']>;
@@ -41,6 +42,7 @@ type VideoFormGroupContent = {
   fechaCreacion: FormControl<VideoFormRawValue['fechaCreacion']>;
   fechaDescarga: FormControl<VideoFormRawValue['fechaDescarga']>;
   user: FormControl<VideoFormRawValue['user']>;
+  formato: FormControl<VideoFormRawValue['formato']>; // ✨ NUEVO CAMPO
 };
 
 export type VideoFormGroup = FormGroup<VideoFormGroupContent>;
@@ -80,6 +82,10 @@ export class VideoFormService {
       user: new FormControl(videoRawValue.user, {
         validators: [],
       }),
+      // ✨ NUEVO CONTROL DE FORMATO
+      formato: new FormControl(videoRawValue.formato, {
+        validators: [],
+      }),
     });
   }
 
@@ -103,6 +109,7 @@ export class VideoFormService {
       tieneAudio: false,
       fechaCreacion: currentTime,
       fechaDescarga: currentTime,
+      formato: FormatoVideo.VERTICAL, // ✨ VALOR POR DEFECTO
     };
   }
 
