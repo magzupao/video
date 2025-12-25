@@ -2,7 +2,7 @@
   <div class="col-8">
     <form name="editForm" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-video-heading" data-cy="VideoCreateUpdateHeading" jhiTranslate="videoApp.video.home.createOrEditLabel">
-        Create or edit a Video
+        Crear o editar un Video
       </h2>
 
       <div>
@@ -15,178 +15,211 @@
           </div>
         }
 
-        <div class="mb-3">
-          <label class="form-label" for="field_titulo" jhiTranslate="videoApp.video.titulo">Titulo</label>
-          <input type="text" class="form-control" name="titulo" id="field_titulo" data-cy="titulo" formControlName="titulo" />
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_audioFilename" jhiTranslate="videoApp.video.audioFilename">Audio Filename</label>
-          <input
-            type="text"
-            class="form-control"
-            name="audioFilename"
-            id="field_audioFilename"
-            data-cy="audioFilename"
-            formControlName="audioFilename"
-          />
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_tieneAudio" jhiTranslate="videoApp.video.tieneAudio">Tiene Audio</label>
-          <input
-            type="checkbox"
-            class="form-check"
-            name="tieneAudio"
-            id="field_tieneAudio"
-            data-cy="tieneAudio"
-            formControlName="tieneAudio"
-          />
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_duracionTransicion" jhiTranslate="videoApp.video.duracionTransicion"
-            >Duracion Transicion</label
-          >
-          <input
-            type="number"
-            class="form-control"
-            name="duracionTransicion"
-            id="field_duracionTransicion"
-            data-cy="duracionTransicion"
-            formControlName="duracionTransicion"
-          />
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_estado" jhiTranslate="videoApp.video.estado">Estado</label>
-          <select class="form-control" name="estado" formControlName="estado" id="field_estado" data-cy="estado">
-            <option [ngValue]="null">{{ 'videoApp.EstadoVideo.null' | translate }}</option>
-            @for (estadoVideo of estadoVideoValues; track $index) {
-              <option [value]="estadoVideo">{{ 'videoApp.EstadoVideo.' + estadoVideo | translate }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_fechaCreacion" jhiTranslate="videoApp.video.fechaCreacion">Fecha Creacion</label>
-          <div class="d-flex">
-            <input
-              id="field_fechaCreacion"
-              data-cy="fechaCreacion"
-              type="datetime-local"
-              class="form-control"
-              name="fechaCreacion"
-              formControlName="fechaCreacion"
-              placeholder="YYYY-MM-DD HH:mm"
-            />
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- SECCIÓN: AUDIO -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">🎵 Configuración de Audio</h5>
           </div>
-        </div>
+          <div class="card-body">
+            <!-- OPCIÓN 1: Subir archivo de audio -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="field_audio"> Opción 1: Subir música de fondo </label>
+              <input
+                id="field_audio"
+                type="file"
+                class="form-control"
+                accept="audio/*,.mp3,.wav,.ogg,.m4a"
+                (change)="onAudioSelected($event)"
+              />
+              <small class="form-text text-muted">
+                <i class="bi bi-info-circle"></i>
+                Sube un archivo de audio (MP3, WAV, OGG, M4A) que se reproducirá durante todo el video. Las imágenes se ajustarán
+                automáticamente a la duración del audio.
+              </small>
 
-        <div class="mb-3">
-          <label class="form-label" for="field_fechaDescarga" jhiTranslate="videoApp.video.fechaDescarga">Fecha Descarga</label>
-          <div class="d-flex">
-            <input
-              id="field_fechaDescarga"
-              data-cy="fechaDescarga"
-              type="datetime-local"
-              class="form-control"
-              name="fechaDescarga"
-              formControlName="fechaDescarga"
-              placeholder="YYYY-MM-DD HH:mm"
-            />
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="field_user" jhiTranslate="videoApp.video.user">User</label>
-          <select class="form-control" id="field_user" data-cy="user" name="user" formControlName="user" [compareWith]="compareUser">
-            @if (!editForm.get('user')!.value) {
-              <option [ngValue]="null" selected></option>
-            }
-            @for (userOption of usersSharedCollection(); track $index) {
-              <option [ngValue]="userOption">{{ userOption.login }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- SECCIÓN DE CARGA DE AUDIO -->
-        <div class="mb-3">
-          <label class="form-label" for="field_audio">Archivo de Audio (opcional)</label>
-
-          <input
-            id="field_audio"
-            type="file"
-            class="form-control"
-            accept="audio/*,.mp3,.wav,.ogg,.m4a"
-            (change)="onAudioSelected($event)"
-          />
-
-          <small class="form-text text-muted"> Formatos aceptados: MP3, WAV, OGG, M4A </small>
-
-          @if (audioError) {
-            <div class="form-text text-danger">{{ audioError }}</div>
-          }
-
-          @if (selectedAudio) {
-            <div class="mt-2 p-2 border rounded">
-              <div class="d-flex align-items-center justify-content-between">
-                <div>
-                  <strong>{{ selectedAudio.name }}</strong>
-                  <small class="text-muted d-block">{{ formatFileSize(selectedAudio.size) }}</small>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAudio()">Quitar</button>
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- SECCIÓN DE CARGA DE IMÁGENES -->
-        <div class="mb-3">
-          <label class="form-label" for="field_images">Imágenes (1 a 10)</label>
-
-          <input id="field_images" type="file" class="form-control" accept="image/*" multiple (change)="onImagesSelected($event)" />
-
-          <small class="form-text text-muted"> Seleccionadas: {{ selectedImages.length }} / 10 </small>
-
-          @if (imagesError) {
-            <div class="form-text text-danger">{{ imagesError }}</div>
-          }
-
-          @if (imagesWithPreview.length > 0) {
-            <ul class="list-unstyled mt-2 mb-0">
-              @for (img of imagesWithPreview; track $index) {
-                <li class="mb-2">
-                  <div class="row align-items-center g-2">
-                    <div class="col-auto">
-                      <img [src]="img.preview" alt="Preview" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover" />
-                    </div>
-                    <div class="col">
-                      <span class="text-truncate d-inline-block" style="max-width: 100%">{{ img.file.name }}</span>
-                    </div>
-                    <div class="col-auto">
-                      <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeImage($index)">Quitar</button>
-                    </div>
-                  </div>
-                </li>
+              @if (audioError) {
+                <div class="alert alert-danger mt-2 mb-0"><i class="bi bi-exclamation-triangle"></i> {{ audioError }}</div>
               }
-            </ul>
-          }
+
+              @if (selectedAudio) {
+                <div class="mt-2 p-3 border rounded bg-light">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <i class="bi bi-file-music text-primary fs-4"></i>
+                      <strong class="ms-2">{{ selectedAudio.name }}</strong>
+                      <small class="text-muted d-block ms-5">{{ formatFileSize(selectedAudio.size) }}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAudio()">
+                      <i class="bi bi-trash"></i> Quitar
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- SEPARADOR -->
+            <div class="text-center my-3">
+              <span class="badge bg-secondary px-3 py-2">O BIEN</span>
+            </div>
+
+            <!-- OPCIÓN 2: Sin audio -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Opción 2: Video sin música</label>
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  name="tieneAudio"
+                  id="field_tieneAudio"
+                  data-cy="tieneAudio"
+                  formControlName="tieneAudio"
+                />
+                <label class="form-check-label" for="field_tieneAudio"> No quiero agregar audio, solo mostrar las imágenes </label>
+              </div>
+              <small class="form-text text-muted">
+                <i class="bi bi-info-circle"></i>
+                Si marcas esta opción, deberás definir cuántos segundos durará cada imagen.
+              </small>
+            </div>
+
+            <!-- Duración de transición (solo si NO tiene audio) -->
+            @if (mostrarDuracionTransicion) {
+              <div class="mb-3 mt-3 p-3 border border-primary rounded" style="background-color: #f8f9fa">
+                <label class="form-label fw-bold" for="field_duracionTransicion">
+                  <i class="bi bi-clock"></i> Duración de cada imagen
+                </label>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    class="form-control"
+                    name="duracionTransicion"
+                    id="field_duracionTransicion"
+                    data-cy="duracionTransicion"
+                    formControlName="duracionTransicion"
+                    min="1"
+                    max="60"
+                    step="1"
+                  />
+                  <span class="input-group-text">segundos</span>
+                </div>
+                <small class="form-text text-muted mt-2 d-block">
+                  <i class="bi bi-lightbulb"></i>
+                  <strong>Valor por defecto: 5 segundos.</strong> Define cuánto tiempo se mostrará cada imagen antes de pasar a la
+                  siguiente.
+                </small>
+              </div>
+            }
+          </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label" for="field_formato" jhiTranslate="videoApp.video.formato">Formato de Video</label>
-          <select class="form-control" name="formato" formControlName="formato" id="field_formato" data-cy="formato">
-            <option value="v">{{ 'videoApp.FormatoVideo.VERTICAL' | translate }}</option>
-            <option value="h">{{ 'videoApp.FormatoVideo.HORIZONTAL' | translate }}</option>
-            <option value="c">{{ 'videoApp.FormatoVideo.CUADRADO' | translate }}</option>
-          </select>
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- SECCIÓN: IMÁGENES -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">🖼️ Imágenes del Video</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="field_images"> Selecciona las imágenes (mínimo 1, máximo 10) </label>
+              <input id="field_images" type="file" class="form-control" accept="image/*" multiple (change)="onImagesSelected($event)" />
+
+              <div class="mt-2">
+                <span
+                  class="badge"
+                  [class.bg-success]="selectedImages.length >= 1 && selectedImages.length <= 10"
+                  [class.bg-warning]="selectedImages.length === 0"
+                  [class.bg-danger]="selectedImages.length > 10"
+                >
+                  {{ selectedImages.length }} / 10 imágenes seleccionadas
+                </span>
+              </div>
+
+              <small class="form-text text-muted mt-2 d-block">
+                <i class="bi bi-info-circle"></i>
+                Las imágenes se mostrarán en el orden en que las selecciones. Formatos: JPG, PNG, GIF, WebP
+              </small>
+
+              @if (imagesError) {
+                <div class="alert alert-danger mt-2 mb-0"><i class="bi bi-exclamation-triangle"></i> {{ imagesError }}</div>
+              }
+
+              @if (imagesWithPreview.length > 0) {
+                <div class="mt-3">
+                  <p class="fw-bold mb-2 text-muted">Vista previa de las imágenes:</p>
+                  <ul class="list-unstyled mb-0">
+                    @for (img of imagesWithPreview; track $index) {
+                      <li class="mb-2">
+                        <div class="row align-items-center g-2 p-2 border rounded">
+                          <div class="col-auto">
+                            <span class="badge bg-primary">{{ $index + 1 }}</span>
+                          </div>
+                          <div class="col-auto">
+                            <img
+                              [src]="img.preview"
+                              alt="Preview"
+                              class="img-thumbnail"
+                              style="width: 60px; height: 60px; object-fit: cover"
+                            />
+                          </div>
+                          <div class="col">
+                            <div class="text-truncate" style="max-width: 100%">
+                              <strong>{{ img.file.name }}</strong>
+                            </div>
+                            <small class="text-muted">{{ formatFileSize(img.file.size) }}</small>
+                          </div>
+                          <div class="col-auto">
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-danger"
+                              (click)="removeImage($index)"
+                              title="Eliminar imagen"
+                            >
+                              <i class="bi bi-trash"></i> Quitar
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- SECCIÓN: FORMATO -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">📐 Formato del Video</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="field_formato"> Selecciona la orientación del video </label>
+              <select class="form-control form-select" name="formato" formControlName="formato" id="field_formato" data-cy="formato">
+                <option value="v">📱 Vertical (9:16) - Ideal para Instagram Stories, TikTok, Reels</option>
+                <option value="h">🖥️ Horizontal (16:9) - Ideal para YouTube, presentaciones</option>
+                <option value="c">⬜ Cuadrado (1:1) - Ideal para posts de Instagram, Facebook</option>
+              </select>
+              <small class="form-text text-muted mt-2 d-block">
+                <i class="bi bi-info-circle"></i>
+                Por defecto se creará en formato <strong>Vertical</strong>, perfecto para redes sociales móviles.
+              </small>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div>
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- BOTONES DE ACCIÓN -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="d-flex gap-2 justify-content-end">
         <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
-          <fa-icon icon="ban" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+          <fa-icon icon="ban" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancelar</span>
         </button>
 
         <button
@@ -194,43 +227,44 @@
           id="save-entity"
           data-cy="entityCreateSaveButton"
           [disabled]="editForm.invalid || isSaving || !isImagesValid()"
-          class="btn btn-primary"
+          class="btn btn-primary btn-lg"
         >
-          <fa-icon icon="save" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+          <fa-icon icon="save" />&nbsp;<span>Crear Video</span>
 
-          <!-- ✏️ OVERLAY MODIFICADO CON MENSAJES DINÁMICOS -->
+          <!-- OVERLAY DE PROCESAMIENTO -->
           @if (isSaving || isProcessing) {
             <div class="saving-overlay">
               <div class="saving-spinner">
-                <!-- Spinner -->
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem">
                   <span class="visually-hidden">Loading...</span>
                 </div>
 
-                <!-- Mensaje principal dinámico -->
-                <p class="mt-3 text-primary fw-bold">{{ processingMessage }}</p>
+                <p class="mt-3 text-primary fw-bold fs-5">{{ processingMessage }}</p>
 
-                <!-- Mensaje según el estado -->
                 @if (videoEstado === 'EN_PROCESO') {
-                  <small class="text-muted d-block mt-2">
-                    <i class="bi bi-info-circle"></i>
-                    El video se está generando en segundo plano.<br />
-                    Esto puede tardar varios minutos dependiendo del número de imágenes.
-                  </small>
+                  <div class="alert alert-info mt-3" style="max-width: 500px">
+                    <i class="bi bi-hourglass-split"></i>
+                    <strong>Procesando tu video...</strong><br />
+                    <small
+                      >Estamos generando tu video. Esto puede tardar varios minutos dependiendo del número de imágenes y la duración del
+                      audio.</small
+                    >
+                  </div>
                 }
 
                 @if (videoEstado === 'COMPLETADO') {
-                  <small class="text-success fw-bold d-block mt-2">
+                  <div class="alert alert-success mt-3" style="max-width: 500px">
                     <i class="bi bi-check-circle-fill"></i>
-                    ✅ El video se generó correctamente
-                  </small>
+                    <strong>¡Video generado exitosamente!</strong>
+                  </div>
                 }
 
                 @if (videoEstado === 'ERROR') {
-                  <small class="text-danger fw-bold d-block mt-2">
-                    <i class="bi bi-x-circle-fill"></i>
-                    ❌ Ocurrió un error al generar el video
-                  </small>
+                  <div class="alert alert-danger mt-3" style="max-width: 500px">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Error al generar el video</strong><br />
+                    <small>Por favor, intenta nuevamente.</small>
+                  </div>
                 }
               </div>
             </div>
@@ -239,13 +273,25 @@
       </div>
     </form>
 
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- DESCARGA DEL VIDEO -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
     @if (videoEstado === 'COMPLETADO' && downloadUrl) {
-      <div class="mt-3 d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-success" (click)="downloadGeneratedVideo()" [disabled]="isDownloading">Descargar</button>
-
-        @if (outputFilename) {
-          <small class="text-muted">({{ outputFilename }})</small>
-        }
+      <div class="card mt-4 border-success">
+        <div class="card-body text-center py-4">
+          <h4 class="card-title text-success mb-3"><i class="bi bi-check-circle-fill"></i> ¡Tu video está listo!</h4>
+          @if (outputFilename) {
+            <p class="text-muted mb-3">
+              <small
+                >Archivo: <code>{{ outputFilename }}</code></small
+              >
+            </p>
+          }
+          <button type="button" class="btn btn-success btn-lg" (click)="downloadGeneratedVideo()" [disabled]="isDownloading">
+            <i class="bi bi-download"></i>
+            {{ isDownloading ? 'Descargando...' : 'Descargar Video' }}
+          </button>
+        </div>
       </div>
     }
   </div>

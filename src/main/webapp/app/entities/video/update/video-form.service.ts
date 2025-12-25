@@ -73,7 +73,7 @@ export class VideoFormService {
       }),
       duracionTransicion: new FormControl(videoRawValue.duracionTransicion),
       estado: new FormControl(videoRawValue.estado, {
-        validators: [],
+        validators: [Validators.min(1)],
       }),
       fechaCreacion: new FormControl(videoRawValue.fechaCreacion, {
         validators: [],

@@ -20,7 +20,7 @@
       "id": "ID",
       "titulo": "Titulo",
       "audioFilename": "Audio Filename",
-      "tieneAudio": "Tiene Audio",
+      "tieneAudio": "No tiene Audio",
       "duracionTransicion": "Duracion Transicion",
       "estado": "Estado",
       "fechaCreacion": "Fecha Creacion",

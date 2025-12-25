@@ -2,7 +2,6 @@ package com.video.app.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.video.app.domain.enumeration.EstadoVideo;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.*;
 import java.io.Serial;
 import java.io.Serializable;
@@ -67,7 +66,7 @@ public class Video implements Serializable {
     @Column("download_url")
     private String downloadUrl;
 
-    @org.springframework.data.annotation.Transient
+    @Column("formato")
     private String formato;
 
     @org.springframework.data.annotation.Transient

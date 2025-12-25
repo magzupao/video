@@ -15,12 +15,14 @@ public interface VideoMapper extends EntityMapper<VideoDTO, Video> {
     @Mapping(target = "videoPath", source = "videoPath")
     @Mapping(target = "outputFilename", source = "outputFilename")
     @Mapping(target = "downloadUrl", source = "downloadUrl")
+    @Mapping(target = "formato", source = "formato")
     VideoDTO toDto(Video s);
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "videoPath", source = "videoPath")
     @Mapping(target = "outputFilename", source = "outputFilename")
     @Mapping(target = "downloadUrl", source = "downloadUrl")
+    @Mapping(target = "formato", source = "formato")
     @Mapping(target = "imagenes", ignore = true)
     @Mapping(target = "user", ignore = true)
     Video toEntity(VideoDTO dto);

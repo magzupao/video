@@ -39,6 +39,7 @@ public class VideoRowMapper implements BiFunction<Row, String, Video> {
         // ✅ AGREGAR ESTAS 2 LÍNEAS:
         entity.setOutputFilename(converter.fromRow(row, prefix + "_output_filename", String.class));
         entity.setDownloadUrl(converter.fromRow(row, prefix + "_download_url", String.class));
+        entity.setFormato(converter.fromRow(row, prefix + "_formato", String.class));
 
         return entity;
     }

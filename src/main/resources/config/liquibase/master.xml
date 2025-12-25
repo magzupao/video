@@ -22,4 +22,5 @@
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
     <!-- jhipster-needle-liquibase-add-incremental-changelog - JHipster will add incremental liquibase changelogs here -->
     <include file="config/liquibase/changelog/20251222205800_add_columns_to_video.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20251223230400_added_column_formato_to_video.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

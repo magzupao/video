@@ -127,6 +127,7 @@ public class VideoResource {
     ) {
         LOG.info("=== INICIO createVideoMultipart (ASÍNCRONO) ===");
         LOG.info("REST request to save Video (multipart) : {}", videoDTO);
+        LOG.info("🔍 FORMATO RECIBIDO EN CONTROLLER: {}", videoDTO.getFormato());
         LOG.info("Number of images received: {}", images != null ? images.size() : 0);
         LOG.info("Audio file received: {}", audio != null ? audio.filename() : "none");
 

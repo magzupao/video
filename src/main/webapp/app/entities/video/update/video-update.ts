@@ -78,6 +78,21 @@ export class VideoUpdate implements OnInit, OnDestroy {
 
       this.loadRelationshipsOptions();
     });
+
+    // ✨ SUSCRIBIRSE A CAMBIOS DEL CHECKBOX tieneAudio
+    this.editForm.controls.tieneAudio.valueChanges.subscribe(tieneAudio => {
+      if (tieneAudio) {
+        // Si se marca Y el campo está vacío, establecer valor por defecto 5
+        const duracionActual = this.editForm.controls.duracionTransicion.value;
+        if (duracionActual === null || duracionActual === undefined) {
+          this.editForm.patchValue({ duracionTransicion: 5 });
+        }
+        // Si ya tiene un valor (8, 10, 15, etc.), lo mantiene
+      } else {
+        // Si se desmarca, limpiar el valor
+        this.editForm.patchValue({ duracionTransicion: null });
+      }
+    });
   }
 
   // 🆕 NUEVO MÉTODO: Cleanup al destruir el componente
@@ -102,6 +117,18 @@ export class VideoUpdate implements OnInit, OnDestroy {
       this.isProcessing = false;
       this.editForm.enable();
       this.imagesError = this.imagesError ?? 'Selecciona entre 1 y 10 imágenes.';
+      return;
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar que tenga audio O tenga duración
+    const tieneAudio = this.editForm.controls.tieneAudio.value;
+    const tieneArchivoAudio = this.selectedAudio !== null;
+
+    if (!tieneArchivoAudio && !tieneAudio) {
+      this.audioError = 'Debes subir un audio O marcar la opción "sin audio" y definir la duración de cada imagen.';
+      this.isSaving = false;
+      this.isProcessing = false;
+      this.editForm.enable();
       return;
     }
 
@@ -140,6 +167,10 @@ export class VideoUpdate implements OnInit, OnDestroy {
       // Actualizar video existente
       this.subscribeToSaveResponse(this.videoService.update(video, this.selectedImages, this.selectedAudio));
     }
+  }
+
+  get mostrarDuracionTransicion(): boolean {
+    return this.editForm.controls.tieneAudio.value === true;
   }
 
   // 🆕 NUEVO MÉTODO: Inicia el polling para verificar el estado del video
@@ -267,8 +298,14 @@ export class VideoUpdate implements OnInit, OnDestroy {
     // Actualizar el campo audioFilename en el formulario
     this.editForm.patchValue({
       audioFilename: file.name,
-      tieneAudio: true,
     });
+
+    // ✅ NUEVO: Si hay audio cargado, desmarcar el checkbox de "sin audio"
+    if (this.editForm.controls.tieneAudio.value) {
+      this.editForm.patchValue({
+        tieneAudio: false,
+      });
+    }
 
     // Limpiar el input
     input.value = '';
@@ -284,7 +321,6 @@ export class VideoUpdate implements OnInit, OnDestroy {
     // Actualizar el formulario
     this.editForm.patchValue({
       audioFilename: null,
-      tieneAudio: false,
     });
   }
 

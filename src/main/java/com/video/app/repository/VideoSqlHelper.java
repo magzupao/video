@@ -23,6 +23,7 @@ public class VideoSqlHelper {
         // ✅ AGREGAR ESTAS 2 LÍNEAS:
         columns.add(Column.aliased("output_filename", table, columnPrefix + "_output_filename"));
         columns.add(Column.aliased("download_url", table, columnPrefix + "_download_url"));
+        columns.add(Column.aliased("formato", table, columnPrefix + "_formato"));
 
         return columns;
     }
