@@ -4,6 +4,7 @@ import com.video.app.domain.enumeration.EstadoVideo;
 import com.video.app.repository.UserRepository;
 import com.video.app.repository.VideoRepository;
 import com.video.app.service.FileStorageService;
+import com.video.app.service.VideoCreditoService;
 import com.video.app.service.VideoProcessingService;
 import com.video.app.service.VideoService;
 import com.video.app.service.dto.UserDTO;
@@ -61,6 +62,8 @@ public class VideoResource {
 
     private final VideoService videoService;
 
+    private final VideoCreditoService videoCreditoService;
+
     private final VideoRepository videoRepository;
 
     private final UserRepository userRepository;
@@ -71,12 +74,14 @@ public class VideoResource {
 
     public VideoResource(
         VideoService videoService,
+        VideoCreditoService videoCreditoService,
         VideoRepository videoRepository,
         UserRepository userRepository,
         VideoProcessingService videoProcessingService,
         FileStorageService fileStorageService
     ) {
         this.videoService = videoService;
+        this.videoCreditoService = videoCreditoService;
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
         this.videoProcessingService = videoProcessingService;
@@ -228,43 +233,64 @@ public class VideoResource {
                     return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "El video aún no está listo"));
                 }
 
-                // ✅ CONSTRUIR PATH: /app/shared-data/videos/{id}/output/{filename}
-                String videoPath = String.format("/app/shared-data/videos/%d/output/%s", video.getId(), video.getOutputFilename());
+                // 🆕 INCREMENTAR CRÉDITOS ANTES DE LA DESCARGA
+                return videoCreditoService
+                    .incrementarVideosConsumidos(video.getUserId())
+                    .doOnSuccess(credito ->
+                        LOG.info(
+                            "✅ Créditos actualizados - User: {}, Consumidos: {}/{}",
+                            video.getUserId(),
+                            credito.getVideosConsumidos(),
+                            credito.getVideosDisponibles()
+                        )
+                    )
+                    .doOnError(error -> LOG.warn("⚠️ Error actualizando créditos (se continúa descarga): {}", error.getMessage()))
+                    .onErrorResume(error -> Mono.empty()) // Continuar aunque falle actualización de créditos
+                    .then(
+                        Mono.defer(() -> {
+                            // ✅ CONSTRUIR PATH: /app/shared-data/videos/{id}/output/{filename}
+                            String videoPath = String.format(
+                                "/app/shared-data/videos/%d/output/%s",
+                                video.getId(),
+                                video.getOutputFilename()
+                            );
 
-                Path filePath = Path.of(videoPath);
-                String filename = video.getOutputFilename();
+                            Path filePath = Path.of(videoPath);
+                            String filename = video.getOutputFilename();
 
-                LOG.info("Preparando descarga:");
-                LOG.info("  - Path construido: {}", videoPath);
-                LOG.info("  - Path absoluto: {}", filePath.toAbsolutePath());
-                LOG.info("  - Nombre archivo: {}", filename);
+                            LOG.info("Preparando descarga:");
+                            LOG.info("  - Path construido: {}", videoPath);
+                            LOG.info("  - Path absoluto: {}", filePath.toAbsolutePath());
+                            LOG.info("  - Nombre archivo: {}", filename);
 
-                FileSystemResource resource = new FileSystemResource(filePath);
+                            FileSystemResource resource = new FileSystemResource(filePath);
 
-                return Mono.fromCallable(() -> {
-                    boolean exists = resource.exists();
-                    LOG.info("Verificando existencia del archivo:");
-                    LOG.info("  - Existe en disco: {}", exists);
+                            return Mono.fromCallable(() -> {
+                                boolean exists = resource.exists();
+                                LOG.info("Verificando existencia del archivo:");
+                                LOG.info("  - Existe en disco: {}", exists);
 
-                    if (exists) {
-                        LOG.info("  - Path absoluto: {}", resource.getFile().getAbsolutePath());
-                        LOG.info("  - Es legible: {}", resource.isReadable());
-                        LOG.info("  - Tamaño: {} bytes", resource.contentLength());
-                    } else {
-                        LOG.error("❌ ARCHIVO NO EXISTE EN DISCO");
-                        LOG.error("Path buscado: {}", filePath.toAbsolutePath());
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Archivo no existe en disco");
-                    }
+                                if (exists) {
+                                    LOG.info("  - Path absoluto: {}", resource.getFile().getAbsolutePath());
+                                    LOG.info("  - Es legible: {}", resource.isReadable());
+                                    LOG.info("  - Tamaño: {} bytes", resource.contentLength());
+                                } else {
+                                    LOG.error("❌ ARCHIVO NO EXISTE EN DISCO");
+                                    LOG.error("Path buscado: {}", filePath.toAbsolutePath());
+                                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Archivo no existe en disco");
+                                }
 
-                    LOG.info("✅ Archivo encontrado, enviando respuesta");
-                    return ResponseEntity.ok()
-                        .contentType(MediaType.valueOf("video/mp4"))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                        .body((Resource) resource);
-                })
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .doOnSuccess(response -> LOG.info("✅ Descarga iniciada exitosamente para video ID: {}", id))
-                    .doOnError(error -> LOG.error("❌ Error durante la descarga del video ID {}: {}", id, error.getMessage()));
+                                LOG.info("✅ Archivo encontrado, enviando respuesta");
+                                return ResponseEntity.ok()
+                                    .contentType(MediaType.valueOf("video/mp4"))
+                                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                                    .body((Resource) resource);
+                            })
+                                .subscribeOn(Schedulers.boundedElastic())
+                                .doOnSuccess(response -> LOG.info("✅ Descarga iniciada exitosamente para video ID: {}", id))
+                                .doOnError(error -> LOG.error("❌ Error durante la descarga del video ID {}: {}", id, error.getMessage()));
+                        })
+                    );
             })
             .doOnError(error -> {
                 if (!(error instanceof ResponseStatusException)) {

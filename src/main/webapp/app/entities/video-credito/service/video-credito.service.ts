@@ -57,6 +57,14 @@ export class VideoCreditoService {
     return videoCredito.id;
   }
 
+  /**
+   * Get the videoCredito of the current authenticated user.
+   * @returns Observable with the current user's video credits
+   */
+  getCurrentUserCredits(): Observable<EntityResponseType> {
+    return this.http.get<IVideoCredito>(`${this.resourceUrl}/current-user`, { observe: 'response' });
+  }
+
   compareVideoCredito(o1: Pick<IVideoCredito, 'id'> | null, o2: Pick<IVideoCredito, 'id'> | null): boolean {
     return o1 && o2 ? this.getVideoCreditoIdentifier(o1) === this.getVideoCreditoIdentifier(o2) : o1 === o2;
   }

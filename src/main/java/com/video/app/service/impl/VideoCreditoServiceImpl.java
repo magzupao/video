@@ -84,4 +84,29 @@ public class VideoCreditoServiceImpl implements VideoCreditoService {
         LOG.debug("Request to delete VideoCredito : {}", id);
         return videoCreditoRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Mono<VideoCreditoDTO> findByUserLogin(String login) {
+        LOG.debug("Request to get VideoCredito by user login : {}", login);
+        return videoCreditoRepository.findByUserLogin(login).map(videoCreditoMapper::toDto);
+    }
+
+    @Override
+    public Mono<VideoCreditoDTO> incrementarVideosConsumidos(Long userId) {
+        LOG.debug("Request to increment videos consumidos for user : {}", userId);
+
+        return videoCreditoRepository
+            .incrementarVideosConsumidosByUserId(userId)
+            .map(videoCreditoMapper::toDto)
+            .doOnSuccess(dto ->
+                LOG.info(
+                    "✅ Créditos incrementados para user {}: consumidos={}, disponibles={}",
+                    userId,
+                    dto.getVideosConsumidos(),
+                    dto.getVideosDisponibles()
+                )
+            )
+            .doOnError(error -> LOG.error("❌ Error incrementando créditos para user {}: {}", userId, error.getMessage()));
+    }
 }

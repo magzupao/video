@@ -71,4 +71,20 @@ public interface VideoCreditoService {
      * @return a Mono to signal the deletion
      */
     Mono<Void> delete(Long id);
+
+    /**
+     * Get videoCredito by user login.
+     *
+     * @param login the login of the user.
+     * @return the entity.
+     */
+    Mono<VideoCreditoDTO> findByUserLogin(String login);
+
+    /**
+     * Incrementar videos consumidos por userId.
+     *
+     * @param userId el id del usuario.
+     * @return el videoCredito actualizado.
+     */
+    Mono<VideoCreditoDTO> incrementarVideosConsumidos(Long userId);
 }

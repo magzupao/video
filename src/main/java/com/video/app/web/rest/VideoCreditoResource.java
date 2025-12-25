@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.ForwardedHeaderUtils;
@@ -222,5 +224,32 @@ public class VideoCreditoResource {
                         .build()
                 )
             );
+    }
+
+    /**
+     * {@code GET  /video-creditos/current-user} : get the videoCredito of the current authenticated user.
+     *
+     * @param jwt the JWT authentication principal containing user information
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the videoCreditoDTO,
+     *         or with status {@code 404 (Not Found)} if videoCredito not found.
+     */
+    @GetMapping("/current-user")
+    public Mono<ResponseEntity<VideoCreditoDTO>> getCurrentUserVideoCredito(@AuthenticationPrincipal Jwt jwt) {
+        LOG.debug("REST request to get VideoCredito for current user");
+
+        String currentUserLogin = jwt.getClaimAsString("sub");
+        if (currentUserLogin == null || currentUserLogin.isEmpty()) {
+            return Mono.error(new RuntimeException("No hay usuario autenticado"));
+        }
+
+        LOG.debug("Looking for VideoCredito for user: {}", currentUserLogin);
+
+        return videoCreditoService
+            .findByUserLogin(currentUserLogin)
+            .map(videoCredito -> {
+                LOG.debug("Found VideoCredito for user {}: {}", currentUserLogin, videoCredito);
+                return ResponseEntity.ok(videoCredito);
+            })
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

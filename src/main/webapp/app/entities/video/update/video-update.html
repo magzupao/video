@@ -5,6 +5,85 @@
         Crear o editar un Video
       </h2>
 
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- ⭐ NUEVA SECCIÓN: TABLA DE CRÉDITOS -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="card mb-4 border-info">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">💳 Tus Créditos de Video</h5>
+        </div>
+        <div class="card-body">
+          @if (loadingCredits) {
+            <div class="text-center py-3">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <p class="mt-2 text-muted">Cargando información de créditos...</p>
+            </div>
+          }
+
+          @if (!loadingCredits && creditsError) {
+            <div class="alert alert-danger mb-0">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <strong>Error al cargar tus créditos.</strong> Por favor, intenta recargar la página.
+            </div>
+          }
+
+          @if (!loadingCredits && !creditsError && userCredits) {
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-center">Videos Consumidos</th>
+                    <th class="text-center">Videos Disponibles</th>
+                    <th class="text-center">Créditos Restantes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-center">
+                      <span class="badge bg-secondary fs-6 px-3 py-2">
+                        {{ userCredits.videosConsumidos ?? 0 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-primary fs-6 px-3 py-2">
+                        {{ userCredits.videosDisponibles ?? 0 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span
+                        class="badge fs-6 px-3 py-2"
+                        [class.bg-success]="getRemainingCredits() > 0"
+                        [class.bg-danger]="getRemainingCredits() === 0"
+                      >
+                        {{ getRemainingCredits() }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            @if (!hasAvailableCredits) {
+              <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <strong>Sin créditos disponibles.</strong>
+                Has consumido todos tus créditos. Por favor, adquiere más créditos para continuar creando videos.
+              </div>
+            }
+
+            @if (hasAvailableCredits) {
+              <div class="alert alert-success mt-3 mb-0">
+                <i class="bi bi-check-circle-fill"></i>
+                <strong>¡Tienes {{ getRemainingCredits() }} crédito(s) disponible(s)!</strong>
+                Puedes crear un nuevo video.
+              </div>
+            }
+          }
+        </div>
+      </div>
+
       <div>
         <jhi-alert-error />
 

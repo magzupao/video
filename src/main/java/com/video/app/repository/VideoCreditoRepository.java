@@ -42,6 +42,14 @@ public interface VideoCreditoRepository extends ReactiveCrudRepository<VideoCred
 
     @Override
     Mono<Void> deleteById(Long id);
+
+    // Agregar este método después de findByUser
+    @Query("SELECT vc.* FROM video_credito vc " + "INNER JOIN jhi_user u ON vc.user_id = u.id " + "WHERE u.login = :login")
+    Mono<VideoCredito> findByUserLogin(String login);
+
+    // 🆕 NUEVO: Incrementar videos consumidos
+    @Query("UPDATE video_credito " + "SET videos_consumidos = videos_consumidos + 1 " + "WHERE user_id = :userId " + "RETURNING *")
+    Mono<VideoCredito> incrementarVideosConsumidosByUserId(Long userId);
 }
 
 interface VideoCreditoRepositoryInternal {
