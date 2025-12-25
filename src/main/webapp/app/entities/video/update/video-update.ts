@@ -607,6 +607,12 @@ export class VideoUpdate implements OnInit, OnDestroy {
 
         this.isDownloading = false;
         console.log('✅ Descarga completada');
+
+        // 🆕 AGREGAR ESTAS 3 LÍNEAS
+        setTimeout(() => {
+          console.log('🔄 Recargando página para actualizar créditos...');
+          window.location.reload();
+        }, 1000);
       },
       error: err => {
         console.error('❌ Error descargando video', err);
