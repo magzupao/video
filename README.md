@@ -154,4 +154,66 @@ networks:
 
 ```
 
+conf nginx
+
+```
+    # ===========================================
+    # FRONTEND ANGULAR - Archivos estáticos
+    # ===========================================
+    location /video/ {
+        alias /var/www/html/video/;
+        index index.html;
+        try_files $uri $uri/ /video/index.html;
+
+        # Cache para assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # ===========================================
+    # BACKEND API
+    # ===========================================
+    location /api/ {
+        client_max_body_size 50m;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 60;
+        proxy_send_timeout 300;
+        proxy_request_buffering off;
+
+        # Si usas Docker:
+        proxy_pass http://videojhipster:8080/api/;
+
+        # Si NO usas Docker (JAR directo o systemd):
+        # proxy_pass http://localhost:8080/api/;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # CORS
+        add_header Access-Control-Allow-Origin "https://guiaturist.com" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+    }
+
+    location /management/ {
+        # Mismo proxy_pass que /api/
+        proxy_pass http://videojhipster:8080/management/;
+        proxy_set_header Host $host;
+    }
+
+    location /v3/api-docs/ {
+        proxy_pass http://videojhipster:8080/v3/api-docs/;
+        proxy_set_header Host $host;
+    }
+```
+
 docker exec -it postgresql psql -U video
