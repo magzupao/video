@@ -172,7 +172,7 @@ jhipster:
   #   allow-credentials: true
   #   max-age: 1800
   mail:
-    from: video@localhost
+    from: no-reply@codigo51lab.com
   api-docs:
     default-include-pattern: /api/**
     management-include-pattern: /management/**

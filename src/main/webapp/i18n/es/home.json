@@ -1,7 +1,19 @@
 {
   "home": {
-    "title": "¡Bienvenido, Java Hipster!",
+    "title": "¡Bienvenido, crea video!",
     "subtitle": "Esta es su página de inicio",
+    "hero": {
+      "title": {
+        "line1": "Crea Impresionantes",
+        "line2": "Videos Cortos",
+        "line3": "En Segundos"
+      },
+      "subtitle": "Transforma tus imágenes y audio en contenido cautivador para redes sociales. Perfecto para TikTok, Instagram Reels y YouTube Shorts.",
+      "buttons": {
+        "startFree": "Comenzar Gratis",
+        "watchDemo": "Ver Demo"
+      }
+    },
     "logged": {
       "message": "Está conectado como \"{{username}}\"."
     },

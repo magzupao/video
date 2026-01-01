@@ -1,12 +1,14 @@
-<jhi-page-ribbon />
+<div class="d-flex flex-column min-vh-100">
+  <jhi-page-ribbon />
 
-<div>
-  <router-outlet name="navbar" />
-</div>
+  <div>
+    <router-outlet name="navbar" />
+  </div>
 
-<div class="container-fluid">
-  <div class="card jh-card">
-    <router-outlet />
+  <div class="container-fluid flex-grow-1">
+    <div class="card jh-card">
+      <router-outlet />
+    </div>
   </div>
 
   <jhi-footer />

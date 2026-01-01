@@ -5,6 +5,10 @@
       "button": "Crear la cuenta"
     },
     "messages": {
+      "welcome": {
+        "title": "¡Bono de bienvenida!",
+        "text": " Regístrate ahora y obtén 3 créditos gratis para videos y comienza a crear contenido increíble."
+      },
       "validate": {
         "login": {
           "required": "Su nombre de usuario es obligatorio.",

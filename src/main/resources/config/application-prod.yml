@@ -42,10 +42,9 @@ spring:
     contexts: prod
     url: jdbc:postgresql://postgresql:5432/video
   mail:
-    host: localhost
-    port: 25
-    username:
-    password:
+    host: mail
+    port: 587
+    from: no-reply@codigo51lab.com
   r2dbc:
     url: r2dbc:postgresql://postgresql:5432/video
     username: video
@@ -103,7 +102,7 @@ jhipster:
         token-validity-in-seconds: 86400
         token-validity-in-seconds-for-remember-me: 2592000
   mail: # specific JHipster mail property, for standard properties see MailProperties
-    base-url: http://my-server-url-to-change # Modify according to your server's URL
+    base-url: https://codigo51lab.com/video # Modify according to your server's URL
   logging:
     use-json-format: false # By default, logs are not in Json format
     logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration

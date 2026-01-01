@@ -1,11 +1,23 @@
 {
   "home": {
-    "title": "Welcome, Java Hipster!",
+    "title": "Welcome, create video!",
     "subtitle": "This is your homepage",
+    "hero": {
+      "title": {
+        "line1": "Create Stunning",
+        "line2": "Short Videos",
+        "line3": "In Seconds"
+      },
+      "subtitle": "Transform your images and audio into captivating social media content. Perfect for TikTok, Instagram Reels, and YouTube Shorts.",
+      "buttons": {
+        "startFree": "Start Creating Free",
+        "watchDemo": "Watch Demo"
+      }
+    },
     "logged": {
       "message": "You are logged in as user \"{{username}}\"."
     },
-    "question": "If you have any questions on JHipster:",
+    "question": "If you have any question on JHipster:",
     "link": {
       "homepage": "JHipster homepage",
       "stackoverflow": "JHipster on Stack Overflow",

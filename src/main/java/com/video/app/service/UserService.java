@@ -3,8 +3,10 @@ package com.video.app.service;
 import com.video.app.config.Constants;
 import com.video.app.domain.Authority;
 import com.video.app.domain.User;
+import com.video.app.domain.VideoCredito;
 import com.video.app.repository.AuthorityRepository;
 import com.video.app.repository.UserRepository;
+import com.video.app.repository.VideoCreditoRepository;
 import com.video.app.security.AuthoritiesConstants;
 import com.video.app.security.SecurityUtils;
 import com.video.app.service.dto.AdminUserDTO;
@@ -40,10 +42,18 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
+    private final VideoCreditoRepository videoCreditoRepository;
+
+    public UserService(
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder,
+        AuthorityRepository authorityRepository,
+        VideoCreditoRepository videoCreditoRepository
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
+        this.videoCreditoRepository = videoCreditoRepository;
     }
 
     @Transactional
@@ -139,8 +149,21 @@ public class UserService {
                     .thenReturn(newUser)
                     .doOnNext(user -> user.setAuthorities(authorities))
                     .flatMap(this::saveUser)
-                    .doOnNext(user -> LOG.debug("Created Information for User: {}", user));
+                    .doOnNext(user -> LOG.debug("Created Information for User: {}", user))
+                    .flatMap(this::createInitialCredits);
             });
+    }
+
+    private Mono<User> createInitialCredits(User user) {
+        VideoCredito videoCredito = new VideoCredito();
+        videoCredito.setUser(user);
+        videoCredito.setVideosDisponibles(5);
+        videoCredito.setVideosConsumidos(0);
+
+        return videoCreditoRepository
+            .save(videoCredito)
+            .doOnSuccess(credito -> LOG.debug("Created initial credits for user: {}", user.getLogin()))
+            .thenReturn(user);
     }
 
     @Transactional

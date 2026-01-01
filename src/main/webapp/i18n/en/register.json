@@ -5,6 +5,10 @@
       "button": "Register"
     },
     "messages": {
+      "welcome": {
+        "title": "Welcome bonus!",
+        "text": " Sign up now and get 3 free video credits to start creating amazing content."
+      },
       "validate": {
         "login": {
           "required": "Your username is required.",

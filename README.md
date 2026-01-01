@@ -14,7 +14,7 @@ jhipster jdl video.jdl
 # src/main/resources/config/application-prod.yml
 spring:
   datasource:
-    url: jdbc:postgresql://postgresql:5432/video_db
+    url: jdbc:postgresql://postgresql:5432/video
     username: video
     password: gestionvideo.*2269
 ```
@@ -216,4 +216,45 @@ conf nginx
     }
 ```
 
+esto en desarrollo
 docker exec -it postgresql psql -U video
+
+esto en produccion para reutilizar el postgresql, ejecutamos linea por linea:
+
+```
+ docker exec -it postgresql psql -U gestionguia -d gestionguia
+
+-- Crear el usuario video
+CREATE USER video WITH PASSWORD 'gestionvideo.*2269';
+
+-- Crear la base de datos video
+CREATE DATABASE video OWNER video;
+
+-- Dar privilegios
+GRANT ALL PRIVILEGES ON DATABASE video TO video;
+
+-- Verificar que se crearon
+\l
+
+-- Ver los usuarios
+\du
+
+\q
+
+ docker exec -it postgresql psql -U video -d video
+```
+
+Configuración de tu aplicación (application-prod.yml):
+
+```
+spring:
+  datasource:
+    url: jdbc:postgresql://postgresql:5432/videodb
+    username: video
+    password: gestionvideo.*2269
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update  # o validate en prod
+```
